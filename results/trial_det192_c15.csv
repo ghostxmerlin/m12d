@@ -1,0 +1,5 @@
+time_s,temp_c,cpu_pct,alive,rss_kb
+10,70,64,1,16284
+20,70,65,1,16344
+30,70,64,1,16176
+#end status=OK rc=0 fps=14.08 pid=396

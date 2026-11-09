@@ -22,3 +22,9 @@ class RetinaFace {
   ncnn::Net net_;
   bool loaded_ = false;
 };
+
+// Multiply every coordinate (box and landmarks) by k, e.g. to map 192x144 results to 320x240.
+void scale_faces(std::vector<FaceBox>& faces, float k);
+
+// Bilinear resize of packed RGB (ncnn::resize_bilinear_c3).
+void resize_rgb(const uint8_t* src, int sw, int sh, uint8_t* dst, int dw, int dh);

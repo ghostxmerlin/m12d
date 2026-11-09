@@ -73,10 +73,10 @@ int main(int argc, char** argv) {
   }
   const Options opt = *parsed;
   std::fprintf(stderr,
-               "m12d %s (%s) models=%s serial=%s tcp=%s:%d stdout=%d fps_cap=%.1f cap=%dx%d@%d max_faces=%d "
+               "m12d %s (%s) models=%s serial=%s tcp=%s:%d stdout=%d fps_cap=%.1f cap=%dx%d@%d det=%dx%d max_faces=%d "
                "threads=%d hb_ms=%d\n",
                kVersion, M12D_GIT, opt.models.c_str(), opt.use_serial ? opt.serial.c_str() : "off",
-               opt.tcp_bind.c_str(), opt.tcp_port, opt.use_stdout, opt.fps_cap, opt.cap_w, opt.cap_h, opt.cap_fps, opt.max_faces,
+               opt.tcp_bind.c_str(), opt.tcp_port, opt.use_stdout, opt.fps_cap, opt.cap_w, opt.cap_h, opt.cap_fps, opt.det_w, opt.det_h, opt.max_faces,
                opt.threads, opt.hb_ms);
 
   struct sigaction sa {};
@@ -156,7 +156,9 @@ int main(int argc, char** argv) {
   std::thread io_th([&] { io->run(g_stop); });
   std::atomic<int64_t> first_det_ms{0};
   std::thread det_th([&] {
-    std::vector<uint8_t> rgb(320 * 240 * 3);
+    std::vector<uint8_t> rgb(320 * 240 * 3), det_rgb(static_cast<size_t>(opt.det_w) * opt.det_h * 3);
+    const bool resize = opt.det_w != 320;
+    const float to320 = 320.0f / opt.det_w;
     FpsMeter meter(2000);
     Frame f;
     uint64_t last = 0;
@@ -173,7 +175,16 @@ int main(int argc, char** argv) {
         yuyv_to_rgb(f.yuyv.data(), f.w, f.h, rgb.data());
       else
         yuyv_to_rgb_half(f.yuyv.data(), f.w, f.h, rgb.data());
-      std::vector<FaceBox> faces = rf.detect(rgb.data(), 320, 240);
+      std::vector<FaceBox> faces;
+      if (resize) {
+        // Near mode: detect on a smaller 4:3 image, then map back to 320x240 so the
+        // stock-compatible output path (x2 -> 640x480) is unchanged.
+        resize_rgb(rgb.data(), 320, 240, det_rgb.data(), opt.det_w, opt.det_h);
+        faces = rf.detect(det_rgb.data(), opt.det_w, opt.det_h);
+        scale_faces(faces, to320);
+      } else {
+        faces = rf.detect(rgb.data(), 320, 240);
+      }
       emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm));
       if (sh.det_frames++ == 0) first_det_ms = now_ms();
       meter.tick(now_ms());

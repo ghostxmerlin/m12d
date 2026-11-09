@@ -8,13 +8,14 @@ struct Options {
   int tcp_port = 5555;
   std::string tcp_bind = "10.254.239.1";  // USB-network address; never the WiFi STA LAN
   float fps_cap = 0;
-  int cap_fps = 10;  // 320x240@10 measured best: 7.36 det fps vs 7.17 @15, 7.14 @30
-  int cap_w = 320, cap_h = 240;  // 320x240 (default) or 640x480; detector input is always 320x240
+  int cap_fps = 30;  // detection at 192x144 runs >10 fps, so the camera must deliver more
+  int cap_w = 320, cap_h = 240;  // 320x240 (default) or 640x480; frames are brought to 320x240 RGB first
+  int det_w = 192, det_h = 144;  // detector input (near mode); 320x240 = stock-identical, see results/*sweep*
   int max_faces = 10;
   int threads = 2;
   int hb_ms = 2000;
 };
 
 // --models DIR --serial PATH --no-serial --tcp-port N --tcp-bind ADDR --stdout --fps-cap F
-// --cap-fps N --cap-size 320x240|640x480 --max-faces N --threads N --hb-ms N
+// --cap-fps N --cap-size 320x240|640x480 --det-size WxH --max-faces N --threads N --hb-ms N
 std::optional<Options> parse_args(int argc, char** argv, std::string& err);

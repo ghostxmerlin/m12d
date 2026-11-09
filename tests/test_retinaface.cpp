@@ -55,3 +55,36 @@ TEST_CASE("finds face in captured frame") {
     CHECK(b.lm[k][1] <= b.y + b.h);
   }
 }
+
+TEST_CASE("scale_faces maps detector coordinates to another resolution") {
+  FaceBox b{10, 20, 30, 40, 0.9f, {{1, 2}, {3, 4}, {5, 6}, {7, 8}, {9, 10}}};
+  std::vector<FaceBox> v = {b};
+  scale_faces(v, 2.5f);
+  CHECK(v[0].x == doctest::Approx(25));
+  CHECK(v[0].y == doctest::Approx(50));
+  CHECK(v[0].w == doctest::Approx(75));
+  CHECK(v[0].h == doctest::Approx(100));
+  CHECK(v[0].prob == doctest::Approx(0.9f));
+  CHECK(v[0].lm[4][0] == doctest::Approx(22.5));
+  CHECK(v[0].lm[4][1] == doctest::Approx(25));
+}
+
+TEST_CASE("finds face at 192x144 after bilinear resize") {
+  std::ifstream f("tests/data/face_640x480.yuyv", std::ios::binary);
+  if (!f) {
+    MESSAGE("SKIPPED: no tests/data/face_640x480.yuyv");
+    return;
+  }
+  std::vector<uint8_t> yuyv(640 * 480 * 2), rgb(320 * 240 * 3), small(192 * 144 * 3);
+  f.read(reinterpret_cast<char*>(yuyv.data()), yuyv.size());
+  yuyv_to_rgb_half(yuyv.data(), 640, 480, rgb.data());
+  resize_rgb(rgb.data(), 320, 240, small.data(), 192, 144);
+  RetinaFace rf;
+  REQUIRE(rf.load(kModel, 1));
+  auto faces = rf.detect(small.data(), 192, 144);
+  REQUIRE(faces.size() == 1);
+  scale_faces(faces, 320.0f / 192);
+  // same face as at 320x240 (345,136,97x119 at 640x480 -> /2), within a few pixels
+  CHECK(faces[0].x == doctest::Approx(172.5).epsilon(0.03));
+  CHECK(faces[0].y == doctest::Approx(68.1).epsilon(0.05));
+}

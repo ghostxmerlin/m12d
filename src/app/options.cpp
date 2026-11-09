@@ -1,6 +1,7 @@
 #include "app/options.h"
 
 #include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 
 namespace {
@@ -53,6 +54,14 @@ std::optional<Options> parse_args(int argc, char** argv, std::string& err) {
         o.cap_w = sz == "320x240" ? 320 : 640;
         o.cap_h = sz == "320x240" ? 240 : 480;
       }
+    }
+    else if (a == "--det-size") {
+      // 4:3 sizes measured in results/2026-11-09-input-size-sweep.md
+      const std::string sz = v;
+      const char* ok_sizes[] = {"320x240", "256x192", "224x168", "192x144", "160x120"};
+      ok = false;
+      for (const char* k : ok_sizes) ok = ok || sz == k;
+      if (ok) std::sscanf(v, "%dx%d", &o.det_w, &o.det_h);
     }
     else if (a == "--max-faces") ok = to_int(v, 1, 10, o.max_faces);
     else if (a == "--threads") ok = to_int(v, 1, 4, o.threads);

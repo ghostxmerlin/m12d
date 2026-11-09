@@ -223,3 +223,20 @@ std::vector<FaceBox> RetinaFace::detect(const uint8_t* rgb, int img_w, int img_h
   }
   return result;
 }
+
+void scale_faces(std::vector<FaceBox>& faces, float k) {
+  for (FaceBox& b : faces) {
+    b.x *= k;
+    b.y *= k;
+    b.w *= k;
+    b.h *= k;
+    for (auto& p : b.lm) {
+      p[0] *= k;
+      p[1] *= k;
+    }
+  }
+}
+
+void resize_rgb(const uint8_t* src, int sw, int sh, uint8_t* dst, int dw, int dh) {
+  ncnn::resize_bilinear_c3(src, sw, sh, dst, dw, dh);
+}

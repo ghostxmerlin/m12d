@@ -25,12 +25,25 @@ TEST_CASE("defaults") {
   CHECK(o->tcp_port == 5555);
   CHECK(o->tcp_bind == "10.254.239.1");
   CHECK(o->fps_cap == 0);
-  CHECK(o->cap_fps == 10);
+  CHECK(o->cap_fps == 30);
   CHECK(o->max_faces == 10);
   CHECK(o->threads == 2);
   CHECK(o->hb_ms == 2000);
   CHECK(o->cap_w == 320);
   CHECK(o->cap_h == 240);
+  CHECK(o->det_w == 192);
+  CHECK(o->det_h == 144);
+}
+
+TEST_CASE("det size") {
+  std::string err;
+  auto o = parse({"--det-size", "320x240"}, err);
+  REQUIRE(o);
+  CHECK(o->det_w == 320);
+  CHECK(o->det_h == 240);
+  CHECK(parse({"--det-size", "160x120"}, err));
+  CHECK_FALSE(parse({"--det-size", "200x150"}, err));
+  CHECK_FALSE(parse({"--det-size", "abc"}, err));
 }
 
 TEST_CASE("cap size") {
