@@ -119,6 +119,9 @@ if(HOST)
   add_executable(ref_stock_fd tools/ref/ref_stock_fd.cpp)
   target_include_directories(ref_stock_fd PRIVATE ${OPENCV_INC})
   target_link_libraries(ref_stock_fd PRIVATE ncnn_lib ${OPENCV_IMGPROC} ${OPENCV_CORE})
+  # experiment: detection quality vs detector input size on the fixed frame set
+  add_executable(scale_sweep tools/scale_sweep.cpp)
+  target_link_libraries(scale_sweep PRIVATE m12core)
 endif()
 
 # ---- m12d main program ----
