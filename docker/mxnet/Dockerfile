@@ -5,3 +5,5 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip libgomp1 libquadmath0 libgfortran5 \
     && rm -rf /var/lib/apt/lists/*
 RUN pip3 install --no-cache-dir "numpy<1.24" mxnet==1.9.1
+# ONNX reference (insightface genderage) in the same reference-only image.
+RUN pip3 install --no-cache-dir onnx==1.14.1 onnxruntime==1.16.3

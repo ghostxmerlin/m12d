@@ -59,6 +59,7 @@ set(M12CORE_SOURCES
   src/vision/retinaface.cpp
   src/vision/align.cpp
   src/vision/age_gender.cpp
+  src/vision/genderage.cpp
   src/proto/det_json.cpp
   src/io/line_splitter.cpp
   src/io/serial_port.cpp
@@ -98,6 +99,7 @@ if(HOST)
     tests/test_fileio.cpp
     tests/test_fps_meter.cpp
     tests/test_attributes.cpp
+    tests/test_genderage.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
@@ -125,6 +127,8 @@ if(HOST)
   # experiment: detection quality vs detector input size on the fixed frame set
   add_executable(attr_file tools/attr_file.cpp)
   target_link_libraries(attr_file PRIVATE m12core)
+  add_executable(genderage_file tools/genderage_file.cpp)
+  target_link_libraries(genderage_file PRIVATE m12core)
   add_executable(scale_sweep tools/scale_sweep.cpp)
   target_link_libraries(scale_sweep PRIVATE m12core)
 endif()

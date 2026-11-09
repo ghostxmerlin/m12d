@@ -17,3 +17,6 @@ ENV PATH=/opt/gcc-arm/bin:$PATH
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libopencv-core-dev libopencv-imgproc-dev \
     && rm -rf /var/lib/apt/lists/*
+# protobuf for ncnn's onnx2ncnn (host-side model conversion only).
+RUN apt-get update && apt-get install -y --no-install-recommends libprotobuf-dev protobuf-compiler \
+    && rm -rf /var/lib/apt/lists/*
