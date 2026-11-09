@@ -25,6 +25,7 @@ class IoLoop {
   static constexpr size_t kChanBufBytes = 8192;
   static constexpr size_t kPushQueueLines = 64;
   static constexpr int kClientSndBuf = 16384;
+  static constexpr size_t kReadBudget = 4096;  // max input bytes per channel per poll round
 
   IoLoop(int serial_fd, int listen_fd, size_t max_clients, Handler h);
   ~IoLoop();

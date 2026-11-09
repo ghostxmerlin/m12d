@@ -23,7 +23,7 @@ struct Rig {
   explicit Rig(size_t max_clients = 2) {
     int sfd = open_serial(pty.slave_path, 115200);
     REQUIRE(sfd >= 0);
-    int lfd = open_tcp_listener(0, 4);
+    int lfd = open_tcp_listener("127.0.0.1", 0, 4);
     REQUIRE(lfd >= 0);
     port = listen_port(lfd);
     loop = new IoLoop(sfd, lfd, max_clients, [this](ChanId c, std::string_view line, bool too_long) -> std::string {
@@ -155,6 +155,44 @@ TEST_CASE("disconnect mid-line") {
   CHECK(read_lines(r.pty.master, 1, 1000) == "R:x\n");
 }
 
+TEST_CASE("tcp listener binds the given address only") {
+  int fd = open_tcp_listener("127.0.0.1", 0, 4);
+  REQUIRE(fd >= 0);
+  sockaddr_in a{};
+  socklen_t len = sizeof a;
+  getsockname(fd, reinterpret_cast<sockaddr*>(&a), &len);
+  CHECK(a.sin_addr.s_addr == htonl(INADDR_LOOPBACK));
+  close(fd);
+  CHECK(open_tcp_listener("203.0.113.9", 0, 4) == -1);  // not a local address
+  CHECK(open_tcp_listener("not-an-ip", 0, 4) == -1);
+}
+
+TEST_CASE("flooding client does not starve serial") {
+  Rig r;
+  int c = tcp_connect(r.port);
+  REQUIRE(c >= 0);
+  fcntl(c, F_SETFL, O_NONBLOCK);
+  std::atomic<bool> done{false};
+  std::thread flood([&] {
+    std::string junk;
+    for (int i = 0; i < 2000; i++) junk += "{\"id\":1,\"do\":\"ping\"}\n";
+    while (!done) {
+      ssize_t n = send(c, junk.data(), junk.size(), MSG_NOSIGNAL);
+      (void)n;
+    }
+  });
+  std::this_thread::sleep_for(milliseconds(200));
+  auto t0 = steady_clock::now();
+  write_all(r.pty.master, "s\n");
+  std::string got = read_lines(r.pty.master, 1, 3000);
+  auto ms = duration_cast<milliseconds>(steady_clock::now() - t0).count();
+  done = true;
+  flood.join();
+  CHECK(got == "R:s\n");
+  CHECK(ms < 300);
+  close(c);
+}
+
 TEST_CASE("open_serial fails on missing path") { CHECK(open_serial("/nonexistent", 115200) == -1); }
 
 TEST_CASE("stop exits") {
@@ -214,7 +252,7 @@ TEST_CASE("same replies over serial and tcp") {
 
   Pty pty;
   int sfd = open_serial(pty.slave_path, 115200);
-  int lfd = open_tcp_listener(0, 4);
+  int lfd = open_tcp_listener("127.0.0.1", 0, 4);
   REQUIRE(sfd >= 0);
   REQUIRE(lfd >= 0);
   const int port = listen_port(lfd);

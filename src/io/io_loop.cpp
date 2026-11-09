@@ -96,8 +96,10 @@ void IoLoop::close_chan(Chan& ch) {
 }
 
 void IoLoop::read_input(Chan& ch) {
+  // Bounded work per poll round (kReadBudget bytes): a client that floods input cannot
+  // starve the other channels; poll() is level-triggered and will call us again.
   char buf[1024];
-  for (;;) {
+  for (size_t budget = kReadBudget; budget >= sizeof buf; budget -= sizeof buf) {
     ssize_t n = ::read(ch.fd, buf, sizeof buf);
     if (n > 0) {
       ch.splitter.feed(buf, static_cast<size_t>(n), [&](std::string_view line, bool too_long) {
