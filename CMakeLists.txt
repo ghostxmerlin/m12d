@@ -54,6 +54,7 @@ target_link_libraries(m12bench PRIVATE ncnn_lib)
 set(M12CORE_SOURCES
   src/core/latest_frame.cpp
   src/core/line_queue.cpp
+  src/image/yuyv.cpp
 )
 add_library(m12core STATIC ${M12CORE_SOURCES})
 target_include_directories(m12core PUBLIC ${CMAKE_SOURCE_DIR}/src)
@@ -68,6 +69,7 @@ if(HOST)
     tests/test_main.cpp
     tests/test_latest_frame.cpp
     tests/test_line_queue.cpp
+    tests/test_yuyv.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
