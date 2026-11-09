@@ -37,6 +37,13 @@
 4. 写 `results/2026-11-xx-phase1.md`。然后做整个分支的最终代码审查（最好交给新的审查者），再向用户汇报。
 5. 写阶段 1b（人形检测）的计划。
 
+## 实时查看页面 helloworld（2026-11-09 新增）
+
+- 在 Mac 上运行 `/usr/bin/python3 tools/helloworld/server.py`，然后打开 http://127.0.0.1:8765/
+- 数据源：默认是 m12d 的 TCP 5555。`--serial /dev/tty.xxx` 改从串口读，`--replay tools/helloworld/sample.jsonl` 回放录好的数据。
+- 页面显示人脸框和五点、心跳信息（帧率、温度、内存等），可以切换检测开关和五点开关。
+- 测试：在 `tools/helloworld` 目录下运行 `/usr/bin/python3 -m unittest test_server`。
+
 ## 设备当前状态（M12，通过 USB 访问，地址 10.254.239.1）
 
 - 持久改动只有一处：`/etc/init.d/S90wifi-conf`，开机时如果 SD 卡上有 `m12-nowifi` 就跳过 Wi-Fi。备份在 `results/2026-11-09-baseline/S90wifi-conf.orig`。
