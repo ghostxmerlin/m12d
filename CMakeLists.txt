@@ -49,3 +49,28 @@ endif()
 
 m12_exe(m12bench tools/m12bench.cpp)
 target_link_libraries(m12bench PRIVATE ncnn_lib)
+
+# ---- core library (shared by device binaries and host tests) ----
+set(M12CORE_SOURCES
+  src/core/latest_frame.cpp
+  src/core/line_queue.cpp
+)
+add_library(m12core STATIC ${M12CORE_SOURCES})
+target_include_directories(m12core PUBLIC ${CMAKE_SOURCE_DIR}/src)
+if(HOST)
+  target_link_libraries(m12core PUBLIC Threads::Threads)
+endif()
+
+# ---- host unit tests ----
+if(HOST)
+  enable_testing()
+  set(M12TEST_SOURCES
+    tests/test_main.cpp
+    tests/test_latest_frame.cpp
+    tests/test_line_queue.cpp
+  )
+  add_executable(m12tests ${M12TEST_SOURCES})
+  target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
+  target_link_libraries(m12tests PRIVATE m12core)
+  add_test(NAME m12tests COMMAND m12tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()
