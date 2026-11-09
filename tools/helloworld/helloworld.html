@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>helloworld</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,MONO@-15..0,300..1000,0..1,0..1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --shell: #E4E7EA;      /* enclosure plastic */
+    --ink: #22303A;
+    --ink-soft: #5B6973;
+    --rule: #C9CFD4;
+    --view: #1E2830;       /* the eye */
+    --grid: #2B3740;
+    --face: #FFC53D;
+    --mark: #FF6F59;
+    --ok: #2BA58A;
+    --warn: #E59A1F;
+    --hot: #D8452F;
+    --font: "Recursive", ui-sans-serif, system-ui, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--shell);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.5;
+    font-variation-settings: "CASL" 0.3;
+  }
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 16px 40px;
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 44px;
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    font-variation-settings: "CASL" 1, "slnt" -6;
+  }
+  .lede { margin: 6px 0 0; color: var(--ink-soft); font-size: 15px; }
+  .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    max-width: 46ch;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rule); flex: none; }
+  .link[data-up="true"] .dot { background: var(--ok); }
+  .link[data-up="false"] .dot { background: var(--hot); }
+
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .eye {
+    position: relative;
+    background: var(--view);
+    border-radius: 14px;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+  }
+  .eye canvas { display: block; width: 100%; height: 100%; }
+  .eye .notice {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 14px 18px;
+    color: #DCE3E8;
+    font-size: 15px;
+    background: linear-gradient(to top, rgba(30, 40, 48, 0.92), rgba(30, 40, 48, 0));
+  }
+  .eye .notice:empty { display: none; }
+  .under {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  aside { display: flex; flex-direction: column; gap: 22px; }
+  .rate { margin: 0; }
+  .rate .num {
+    display: block;
+    font-size: 64px;
+    line-height: 1;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    font-variation-settings: "CASL" 0.6;
+  }
+  .rate .unit { font-size: 15px; color: var(--ink-soft); }
+
+  .temp .row { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+  .bar {
+    position: relative;
+    height: 10px;
+    margin-top: 8px;
+    border-radius: 5px;
+    background: linear-gradient(to right, var(--ok) 0%, var(--ok) 50%, var(--warn) 66%, var(--hot) 83%, var(--hot) 100%);
+    opacity: 0.35;
+  }
+  .bar-wrap { position: relative; }
+  .bar-fill {
+    /* Full-width gradient revealed up to the current temperature, so each color sits at
+       its threshold (80 / 85 / 90 °C) whatever the reading. */
+    position: absolute;
+    top: 8px; left: 0; right: 0;
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(to right, var(--ok) 0%, var(--ok) 50%, var(--warn) 66%, var(--hot) 83%, var(--hot) 100%);
+    clip-path: inset(0 100% 0 0 round 5px);
+    transition: clip-path 0.4s ease;
+  }
+  @media (prefers-reduced-motion: reduce) { .bar-fill { transition: none; } }
+  .ticks { position: relative; height: 18px; font-size: 12px; color: var(--ink-soft); }
+  .ticks span { position: absolute; transform: translateX(-50%); top: 2px; }
+
+  dl.facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    margin: 0;
+    font-size: 15px;
+  }
+  dl.facts dt { color: var(--ink-soft); }
+  dl.facts dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .faces { margin: 0; padding: 0; list-style: none; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .faces li { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--rule); }
+  .faces li:last-child { border-bottom: 0; }
+  .faces .empty { color: var(--ink-soft); }
+
+  .spark { width: 100%; height: 56px; display: block; }
+  .spark-label { font-size: 13px; color: var(--ink-soft); display: flex; justify-content: space-between; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+  button.toggle {
+    font: inherit;
+    font-size: 15px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button.toggle[aria-pressed="true"] { background: var(--ink); color: var(--shell); }
+  button.toggle:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.toggle:focus-visible { outline: 3px solid var(--face); outline-offset: 2px; }
+  .cmd-msg { font-size: 13px; color: var(--hot); min-height: 1.5em; margin: 6px 0 0; }
+
+  h2 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+  footer { margin-top: 28px; font-size: 13px; color: var(--ink-soft); max-width: 72ch; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div>
+      <h1>helloworld</h1>
+      <p class="lede">M12 摄像头此刻看到的人脸，按 640×480 坐标绘制</p>
+    </div>
+    <div class="link" id="link" data-up="unknown" role="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span><span id="link-msg">正在连接本机服务</span>
+    </div>
+  </header>
+
+  <main>
+    <section aria-label="检测画面">
+      <div class="eye">
+        <canvas id="eye" width="640" height="480" aria-label="人脸框与五点关键点"></canvas>
+        <div class="notice" id="notice">还没有收到检测数据</div>
+      </div>
+      <div class="under">
+        <span id="frame-info">第 – 帧</span>
+        <span id="line-rate">收到 – 行/秒</span>
+      </div>
+    </section>
+
+    <aside>
+      <p class="rate"><span class="num" id="fps">–</span><span class="unit">检测帧率 fps（设备心跳）</span></p>
+
+      <div class="temp">
+        <div class="row"><h2>芯片温度</h2><span id="temp">– °C</span></div>
+        <div class="bar-wrap">
+          <div class="bar"></div>
+          <div class="bar-fill" id="temp-fill"></div>
+        </div>
+        <div class="ticks" aria-hidden="true">
+          <span style="left:50%">80</span><span style="left:66.6%">85</span><span style="left:83.3%">90 暂停</span>
+        </div>
+      </div>
+
+      <div>
+        <h2>画面中的人脸</h2>
+        <ul class="faces" id="faces"><li class="empty">没有人</li></ul>
+      </div>
+
+      <div>
+        <div class="spark-label"><span>最近 3 分钟</span><span><span style="color:var(--face)">■</span> 帧率　<span style="color:var(--mark)">■</span> 温度</span></div>
+        <canvas class="spark" id="spark" width="600" height="112" aria-label="帧率与温度曲线"></canvas>
+      </div>
+
+      <dl class="facts">
+        <dt>可用内存</dt><dd id="mem">–</dd>
+        <dt>CPU 频率</dt><dd id="mhz">–</dd>
+        <dt>已检测帧数</dt><dd id="frames">–</dd>
+        <dt>丢弃的推送行</dt><dd id="drop">–</dd>
+        <dt>摄像头重开次数</dt><dd id="reopens">–</dd>
+        <dt>设备运行时间</dt><dd id="up">–</dd>
+      </dl>
+
+      <div>
+        <h2>设置</h2>
+        <div class="controls">
+          <button class="toggle" id="t-det" aria-pressed="true" disabled>检测</button>
+          <button class="toggle" id="t-lm" aria-pressed="true" disabled>五点</button>
+          <button class="toggle" id="t-mirror" aria-pressed="false">镜像显示</button>
+        </div>
+        <p class="cmd-msg" id="cmd-msg" role="alert"></p>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    数据来自 m12d 的统一指令集。现在经 USB 网络读取，以后接上串口时，用同一套协议、不改页面。
+    「检测」和「五点」会改设备上的配置；「镜像显示」只影响这个页面。
+  </footer>
+</div>
+
+<script>
+(() => {
+  const W = 640, H = 480, TRAIL_MS = 700;
+  const eye = document.getElementById("eye");
+  const ctx = eye.getContext("2d");
+  const $ = (id) => document.getElementById(id);
+
+  // Crisp canvas on HiDPI screens; drawing still uses 640x480 coordinates.
+  function fitCanvas(c, w, h) {
+    const r = window.devicePixelRatio || 1;
+    c.width = Math.round(w * r);
+    c.height = Math.round(h * r);
+    return r;
+  }
+  let dpr = fitCanvas(eye, W, H);
+
+  const state = {
+    frames: [],          // recent detection frames {t, f, faces}
+    lastDetAt: 0,
+    detOn: true,
+    mirror: false,
+    linkUp: false,
+    history: [],         // {t, fps, temp}
+    lineTimes: [],
+  };
+
+  // ---------- drawing ----------
+  function drawGrid() {
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--grid");
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 80; x < W; x += 80) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); }
+    for (let y = 80; y < H; y += 80) { ctx.moveTo(0, y + 0.5); ctx.lineTo(W, y + 0.5); }
+    ctx.stroke();
+  }
+
+  function brackets(x, y, w, h, len) {
+    const l = Math.min(len, w / 3, h / 3);
+    ctx.beginPath();
+    ctx.moveTo(x, y + l); ctx.lineTo(x, y); ctx.lineTo(x + l, y);
+    ctx.moveTo(x + w - l, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + l);
+    ctx.moveTo(x + w, y + h - l); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - l, y + h);
+    ctx.moveTo(x + l, y + h); ctx.lineTo(x, y + h); ctx.lineTo(x, y + h - l);
+    ctx.stroke();
+  }
+
+  function draw(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawGrid();
+    if (state.mirror) ctx.setTransform(-dpr, 0, 0, dpr, W * dpr, 0);
+
+    const css = getComputedStyle(document.documentElement);
+    const faceColor = css.getPropertyValue("--face").trim();
+    const markColor = css.getPropertyValue("--mark").trim();
+
+    // Motion trail: earlier frames as fading outlines.
+    const recent = state.frames.filter((fr) => now - fr.t < TRAIL_MS);
+    for (let i = 0; i < recent.length - 1; i++) {
+      const age = now - recent[i].t;
+      ctx.globalAlpha = 0.28 * (1 - age / TRAIL_MS);
+      ctx.strokeStyle = faceColor;
+      ctx.lineWidth = 1.5;
+      for (const f of recent[i].faces) ctx.strokeRect(f.x, f.y, f.w, f.h);
+    }
+    ctx.globalAlpha = 1;
+
+    const cur = state.frames[state.frames.length - 1];
+    if (cur && now - cur.t < 1500) {
+      for (const f of cur.faces) {
+        ctx.strokeStyle = faceColor;
+        ctx.lineWidth = 3;
+        brackets(f.x, f.y, f.w, f.h, 22);
+        ctx.fillStyle = markColor;
+        for (const m of f.mark || []) {
+          ctx.beginPath(); ctx.arc(m.x, m.y, 4, 0, Math.PI * 2); ctx.fill();
+        }
+        // Label stays readable when mirrored.
+        ctx.save();
+        const lx = state.mirror ? W - (f.x + f.w) : f.x;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = faceColor;
+        ctx.font = "600 15px " + css.getPropertyValue("--font");
+        ctx.fillText((f.prob * 100).toFixed(1) + "%", lx, Math.max(16, f.y - 8));
+        ctx.restore();
+      }
+    }
+    updateNotice(now);
+    requestAnimationFrame(draw);
+  }
+
+  function updateNotice(now) {
+    let msg = "";
+    if (!state.linkUp) msg = "没有连上设备，画面暂停。确认 M12 上 m12d 正在运行、USB 网线已连接。";
+    else if (!state.detOn) msg = "检测已关闭（待机）。打开右侧的「检测」即可恢复。";
+    else if (!state.lastDetAt) msg = "已连上设备，正在等第一帧检测结果。";
+    else if (now - state.lastDetAt > 1500) msg = `已经 ${((now - state.lastDetAt) / 1000).toFixed(0)} 秒没有新检测结果。可能是过热暂停（90°C）或摄像头在重开。`;
+    const el = $("notice");
+    if (el.textContent !== msg) el.textContent = msg;
+  }
+
+  function drawSpark() {
+    const c = $("spark");
+    const r = fitCanvas(c, c.clientWidth || 300, 56);
+    const g = c.getContext("2d");
+    g.setTransform(r, 0, 0, r, 0, 0);
+    const w = c.width / r, h = c.height / r;
+    g.clearRect(0, 0, w, h);
+    const now = Date.now();
+    const pts = state.history.filter((p) => now - p.t < 180000);
+    if (pts.length < 2) return;
+    const css = getComputedStyle(document.documentElement);
+    const line = (key, lo, hi, color) => {
+      g.strokeStyle = color; g.lineWidth = 2; g.beginPath();
+      pts.forEach((p, i) => {
+        const x = w - ((now - p.t) / 180000) * w;
+        const y = h - 4 - ((Math.min(hi, Math.max(lo, p[key])) - lo) / (hi - lo)) * (h - 8);
+        i ? g.lineTo(x, y) : g.moveTo(x, y);
+      });
+      g.stroke();
+    };
+    line("fps", 0, 30, css.getPropertyValue("--face").trim());
+    line("temp", 50, 95, css.getPropertyValue("--mark").trim());
+  }
+
+  // ---------- data ----------
+  function onDet(o) {
+    const now = performance.now();
+    state.frames.push({ t: now, f: o.f, faces: o.face || [] });
+    if (state.frames.length > 40) state.frames.shift();
+    state.lastDetAt = now;
+    state.lineTimes.push(now);
+    $("frame-info").textContent = `第 ${o.f} 帧，${o.num} 张人脸`;
+    const list = $("faces");
+    list.replaceChildren();
+    if (!o.face || !o.face.length) {
+      const li = document.createElement("li"); li.className = "empty"; li.textContent = "没有人"; list.append(li);
+    } else {
+      o.face.forEach((f, i) => {
+        const li = document.createElement("li");
+        const a = document.createElement("span"); a.textContent = `第 ${i + 1} 张　中心 (${Math.round(f.x + f.w / 2)}, ${Math.round(f.y + f.h / 2)})　宽 ${Math.round(f.w)}`;
+        const b = document.createElement("span"); b.textContent = (f.prob * 100).toFixed(1) + "%";
+        li.append(a, b); list.append(li);
+      });
+    }
+  }
+
+  function fmtUp(s) {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h ? `${h} 小时 ${m} 分` : `${m} 分 ${s % 60} 秒`;
+  }
+
+  function onHb(hb) {
+    $("fps").textContent = hb.fps.toFixed(1);
+    $("temp").textContent = `${hb.t} °C`;
+    const pct = Math.max(0, Math.min(100, ((hb.t - 50) / 45) * 100));   // 50..95 °C scale
+    $("temp-fill").style.clipPath = `inset(0 ${100 - pct}% 0 0 round 5px)`;
+    $("mem").textContent = `${(hb.mem / 1024).toFixed(0)} MB`;
+    $("mhz").textContent = `${hb.mhz} MHz`;
+    $("frames").textContent = hb.frames.toLocaleString("zh-CN");
+    $("drop").textContent = hb.drop;
+    $("reopens").textContent = hb.reopens;
+    $("up").textContent = fmtUp(hb.up);
+    state.history.push({ t: Date.now(), fps: hb.fps, temp: hb.t });
+    if (state.history.length > 200) state.history.shift();
+    drawSpark();
+  }
+
+  function onLink(l) {
+    state.linkUp = l.up;
+    $("link").dataset.up = String(l.up);
+    $("link-msg").textContent = l.msg;
+    for (const id of ["t-det", "t-lm"]) $(id).disabled = !l.cmds;
+    if (l.cmds) send({ do: "cfg" });
+  }
+
+  setInterval(() => {
+    const now = performance.now();
+    state.lineTimes = state.lineTimes.filter((t) => now - t < 2000);
+    $("line-rate").textContent = `收到 ${(state.lineTimes.length / 2).toFixed(1)} 行/秒`;
+  }, 500);
+
+  // ---------- commands ----------
+  function applyCfg(cfg) {
+    state.detOn = cfg.det;
+    $("t-det").setAttribute("aria-pressed", String(cfg.det));
+    $("t-lm").setAttribute("aria-pressed", String(cfg.lm));
+  }
+
+  async function send(cmd) {
+    $("cmd-msg").textContent = "";
+    try {
+      const r = await fetch("/cmd", { method: "POST", body: JSON.stringify(cmd) });
+      const j = await r.json();
+      if (!j.ok) {
+        $("cmd-msg").textContent = j.err === "timeout"
+          ? "设备 3 秒内没有回应，设置可能没有生效。"
+          : `设备拒绝了这条设置（错误码 ${j.err}）。`;
+        return;
+      }
+      if (j.cfg) applyCfg(j.cfg);
+    } catch (e) {
+      $("cmd-msg").textContent = "设置没有发出去：本机服务没有响应。";
+    }
+  }
+
+  $("t-det").addEventListener("click", (e) => send({ do: "cfg", det: e.currentTarget.getAttribute("aria-pressed") !== "true" }));
+  $("t-lm").addEventListener("click", (e) => send({ do: "cfg", lm: e.currentTarget.getAttribute("aria-pressed") !== "true" }));
+  $("t-mirror").addEventListener("click", (e) => {
+    state.mirror = !state.mirror;
+    e.currentTarget.setAttribute("aria-pressed", String(state.mirror));
+  });
+
+  // ---------- stream ----------
+  const es = new EventSource("/events");
+  es.onmessage = (ev) => {
+    const o = JSON.parse(ev.data);
+    if (o.link) onLink(o.link);
+    else if (o.hb) onHb(o.hb);
+    else if (o.f !== undefined) onDet(o);
+  };
+  es.onerror = () => onLink({ up: false, cmds: false, msg: "本机服务没有响应：运行 tools/helloworld/server.py" });
+
+  window.addEventListener("resize", drawSpark);
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
