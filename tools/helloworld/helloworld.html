@@ -445,7 +445,7 @@
   async function send(cmd) {
     $("cmd-msg").textContent = "";
     try {
-      const r = await fetch("/cmd", { method: "POST", body: JSON.stringify(cmd) });
+      const r = await fetch("/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
       const j = await r.json();
       if (!j.ok) {
         $("cmd-msg").textContent = j.err === "timeout"

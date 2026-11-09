@@ -79,3 +79,26 @@ class ReplayTest(unittest.TestCase):
         Replay(path, period=0).run_once(got.append)
         os.unlink(path)
         self.assertEqual(got, ['{"f":1}', '{"hb":{"t":70}}', '{"f":2}'])
+
+
+class RequestGuard(unittest.TestCase):
+    def test_host_and_origin(self):
+        from server import request_allowed
+        ok = {"Host": "127.0.0.1:8765"}
+        self.assertTrue(request_allowed(ok, 8765))
+        self.assertTrue(request_allowed({"Host": "localhost:8765", "Origin": "http://localhost:8765"}, 8765))
+        self.assertFalse(request_allowed({"Host": "evil.example:8765"}, 8765))          # DNS rebinding
+        self.assertFalse(request_allowed({}, 8765))
+        self.assertFalse(request_allowed({"Host": "127.0.0.1:8765", "Origin": "https://evil.example"}, 8765))
+        self.assertFalse(request_allowed({"Host": "127.0.0.1:9999"}, 8765))
+
+    def test_command_allowlist(self):
+        from server import allowed_command
+        self.assertTrue(allowed_command({"do": "cfg"}))
+        self.assertTrue(allowed_command({"do": "cfg", "det": False}))
+        self.assertTrue(allowed_command({"do": "cfg", "lm": True, "det": True}))
+        self.assertFalse(allowed_command({"do": "cfg", "max_faces": 1}))
+        self.assertFalse(allowed_command({"do": "cfg", "det": "no"}))
+        self.assertFalse(allowed_command({"do": "snap"}))
+        self.assertFalse(allowed_command({"do": "ping", "x": 1}))
+        self.assertFalse(allowed_command([]))

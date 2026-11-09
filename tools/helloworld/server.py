@@ -218,7 +218,26 @@ class Hub:
         self.publish(self.state)
 
 
-def make_handler(hub, link):
+def request_allowed(headers, port):
+    """Only the page served by this relay may use it: Host must be this loopback address
+    (blocks DNS rebinding) and Origin, when sent, must be the same origin (blocks other
+    sites' scripts)."""
+    hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+    if headers.get("Host") not in hosts:
+        return False
+    origin = headers.get("Origin")
+    return origin is None or origin in {f"http://{h}" for h in hosts}
+
+
+def allowed_command(cmd):
+    """The page only reads the config and toggles detection / landmarks."""
+    if not isinstance(cmd, dict) or cmd.get("do") != "cfg":
+        return False
+    extra = set(cmd) - {"do"}
+    return extra <= {"det", "lm"} and all(isinstance(cmd[k], bool) for k in extra)
+
+
+def make_handler(hub, link, port):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
             pass
@@ -232,6 +251,9 @@ def make_handler(hub, link):
             self.wfile.write(body)
 
         def do_GET(self):
+            if not request_allowed(self.headers, port):
+                self._send(403, "text/plain; charset=utf-8", "只接受本机页面的请求".encode())
+                return
             if self.path in ("/", "/helloworld", "/helloworld.html"):
                 with open(os.path.join(HERE, "helloworld.html"), "rb") as f:
                     self._send(200, "text/html; charset=utf-8", f.read())
@@ -262,15 +284,20 @@ def make_handler(hub, link):
             if self.path != "/cmd":
                 self._send(404, "text/plain; charset=utf-8", "没有这个接口".encode())
                 return
+            # application/json makes cross-site fetches need a CORS preflight, which we never grant.
+            if not request_allowed(self.headers, port) or \
+                    self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
+                self._send(403, "application/json", b'{"ok":false,"err":"forbidden"}')
+                return
             n = int(self.headers.get("Content-Length") or 0)
             try:
                 cmd = json.loads(self.rfile.read(min(n, 4096)) or b"{}")
-                if not isinstance(cmd, dict) or not isinstance(cmd.get("do"), str):
-                    raise ValueError
             except ValueError:
                 self._send(400, "application/json", b'{"ok":false,"err":"badjson"}')
                 return
-            cmd.pop("id", None)
+            if not allowed_command(cmd):
+                self._send(403, "application/json", b'{"ok":false,"err":"notallowed"}')
+                return
             reply = link.request(cmd)
             if reply is None:
                 self._send(504, "application/json", b'{"ok":false,"err":"timeout"}')
@@ -300,7 +327,7 @@ def main():
     up.on_line = link.feed_line
     up.on_state = hub.set_link
     up.start()
-    httpd = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(hub, link))
+    httpd = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(hub, link, args.port))
     httpd.daemon_threads = True
     print(f"helloworld: http://127.0.0.1:{args.port}/  (upstream {up.src})", flush=True)
     try:
