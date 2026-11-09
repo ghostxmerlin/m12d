@@ -1,54 +1,58 @@
-# 工作状态（2026-11-09 晚更新）
+# 工作状态（2026-11-09 深夜更新）
 
 ## 当前所处阶段
 
-- 设计文档已确认：`docs/superpowers/specs/2026-11-09-m12-vision-design.md`
-- 阶段 0–1 计划已于 2026-11-09 晚 按用户意见细化：`docs/superpowers/plans/2026-11-09-m12d-phase0-1.md`，共 13 个任务。
-  - 验收分 A/B/C/D 四层（设计 §10）：
-    - A 环境；
-    - B 和原厂参照代码离线逐帧对比；
-    - C 功能，包括统一指令集和画框；
-    - D 运行，三组各 5 分钟。
-  - 用户的决定：
-    - 不做网页预览，数据能画框就行；
-    - 不兼容原厂串口命令，但**网络和串口必须共用同一套指令集**（设计 §6）；
-    - 测试先不用太长，1 小时长测推迟到阶段 5。
-  - 真实串口：用户 2026-11-10 上午会有 3.3V USB-TTL 线，在 Task 13 Step 6 使用。
-  - 还没确认：用户是否认可修订后的计划；执行方式；是否按任务提交。
-- **代码一行都还没写**。`app/` 已经 `git init`，但还没有任何提交。
+- 阶段 0–1 计划：`docs/superpowers/plans/2026-11-09-m12d-phase0-1.md`
+  - 执行方式：在会话里直接执行，每个任务提交一次，分支 `phase-0-1`。
+  - 进度记录在 `.superpowers/sdd/2026-11-09-m12d-phase0-1/progress.md`，该目录已被 git 忽略。
+- **Task 1–12 已完成。Task 13（验收）只剩需要用户配合的几步。**
+
+### 已完成的验收
+
+- **A 层**：静态二进制可以在设备上运行；主机和设备的推理结果逐位一致；单帧推理 118 ms。
+- **B 层**：28 帧上，B1 与原厂完全一致，B2 最大偏差 0.139 px，设备复核偏差 0.001 px。见 `results/2026-11-09-parity.md`。
+- **C 层**：
+  - 统一指令集在 pty 和 TCP 上的测试已通过；
+  - 在设备上通过 TCP 跑命令脚本，16/16 通过。
+
+### 这一阶段里用户做的决定（2026-11-09）
+
+- 检测采集改用 320×240。实验数据见 `results/2026-11-09-capture-experiments.md`。
+- 默认使用近距离模式：检测输入 192×144，摄像头 30 fps。
+  - 30 秒试跑：17.95 fps、CPU 84%；原厂是 6.95 fps、97%。
+  - 实验数据见 `results/2026-11-09-input-size-sweep.md`。
+- 新增阶段 1b：远距离人形检测（Yolo-Fastest 160，约 37 ms/次），并与人脸检测融合。排在人脸识别之前。见设计 §5、§10。
+
+## 明天上午（需要用户配合）
+
+1. **Task 13 Step 2：画框确认**
+   - 用户在 2–3 个位置各停一下，从 Mac 发 `snap`，拉回 `/tmp/m12d_snap.yuyv`，用 `draw_boxes.py` 叠图。
+   - 快照帧现在是 320×240，`draw_boxes` 会自动缩放。
+2. **Task 13 Step 3–5：D 层对比，每组 5 分钟**
+   - 共四组：原厂、m12d 默认（近距离模式）、m12d 320×240、m12d 限到原厂同帧率。
+   - 每组开始前，设备要冷却到 66°C 以下，期间用户要坐在镜头前。
+3. **Task 13 Step 6：真实串口**
+   - 用 USB-TTL 线，只接 GND 和 TX/RX（交叉），**不接 VCC**。接线前先对照 M5 官方文档确认 Grove 线序。
+   - 用 `cmdtest.py --serial` 跑命令脚本，再和 `--tcp` 的结果对比；最后用 `--watch 60` 查看推送。
+4. 写 `results/2026-11-xx-phase1.md`。然后做整个分支的最终代码审查（最好交给新的审查者），再向用户汇报。
+5. 写阶段 1b（人形检测）的计划。
 
 ## 设备当前状态（M12，通过 USB 访问，地址 10.254.239.1）
 
-- **只有一处持久改动**：`/etc/init.d/S90wifi-conf`
-  - 开机时最多等 8 秒让 SD 卡挂载；如果存在 `/media/sdcard/m12-nowifi`，就跳过 Wi-Fi。
-  - 原文件备份在两处：设备上 `/media/sdcard/m12test/S90wifi-conf.orig`，本仓库 `results/2026-11-09-baseline/S90wifi-conf.orig`。
-- **恢复 Wi-Fi**：删除 SD 卡上的 `m12-nowifi` 后重启。要彻底还原，就用备份覆盖 `S90wifi-conf`。
-- 原厂服务正常运行，收工前切到了待机功能 `audio_fft`；原厂温控 `check_thermal.py` 也在运行。
-- 设备上的 `/home/m5stack/payload` 没有改动过。
+- 持久改动只有一处：`/etc/init.d/S90wifi-conf`，开机时如果 SD 卡上有 `m12-nowifi` 就跳过 Wi-Fi。备份在 `results/2026-11-09-baseline/S90wifi-conf.orig`。
+- 新增应用目录 `/home/m5stack/m12d/{bin,models,log}`，里面有 m12d、m12bench、m12cap、detect_file，以及几个实验用的二进制。
+- 当前原厂服务处于停止状态，是按 PID 停的；温控程序在运行。**重启设备就会回到原厂状态。**
+- `/tmp/set_*.yuyv` 是采集的固定图片集，重启后会丢失；本地 `tests/data/set/` 里有一份。
 
-## 今天的实测结论
+## Mac 端注意事项
 
-完整数据见 `results/2026-11-09-baseline/`，摘要已写入设计文档 §3。
-
-- **Wi-Fi 不启动，空闲温度约低 8°C**：71.7°C 对 63.7°C。
-- **运行时关 Wi-Fi 会卡死网络栈**：hostapd 退不出来，USB 网络随之失效，只能断电。共复现 2 次。
-- **USB-C 口不是 USB 设备**：板上是一颗 USB 转以太网芯片（CoreChips），不可能做 CDC 串口。
-- **原厂 face_detector 的表现**：
-  - 约 6.8 fps，CPU 96%，内存约 22MB。
-  - 一次偶发无声退出（27 秒），原因未知；之后两次没有复现。
-  - 子进程死后，原厂服务就卡死了，只能重启。
-- **温度没有到稳态**：Wi-Fi 关闭时运行 5 分钟，从 67°C 升到 77°C，还在上升。
-
-## 下次开工
-
-1. 请用户审阅修订后的计划，并确认执行方式和是否按任务提交。
-2. 用户确认后再开工。
-3. 从 Task 1 开始执行：Docker 交叉编译环境，加上一个在设备上运行的全静态测试程序。
+- 设备密码在 `.superpowers/m12.env`，已被 git 忽略。使用方法：`. .superpowers/m12.env`。
+- **Mac 上的 Python 脚本必须用 `/usr/bin/python3` 运行**。Homebrew 的 Python 被 macOS 的"本地网络"权限拦截，会报 "No route to host"。
+- 编译：`scripts/env.sh scripts/build.sh host|target`。部署：`scripts/deploy.sh`。测量：`scripts/measure.sh`。
 
 ## 访问设备的注意事项
 
-- SSH 用户和密码通过环境变量传入，**不要写进仓库**。
-- 设备上的 shell 是 zsh：普通用户不能写 `/dev/null`，没有 `pkill`，scp 和 sftp 都不可用。
-- 远程执行命令时，先 base64 编码，再用 `| base64 -d | sh` 执行。
-- 停原厂服务时，**只按 PID 结束** `server.py` 和 `server_core.py`。严禁使用 `killall python3`，它会把温控程序一起杀掉。
+- 设备上的 shell 是 zsh：普通用户不能写 `/dev/null`，没有 `pkill`、`timeout`，scp 和 sftp 都不可用。
+- 停原厂服务一律用 `scripts/stock.sh stop`，它只按 PID 结束进程。严禁使用 `killall python3`。
+- 在设备上按名字结束进程时，不要匹配 `m12cmd`：`m12ssh.sh --root` 自己的临时脚本就叫这个名字，会把自己也杀掉。
 - 用户喜欢短时间的测试，一般 2–5 分钟。
