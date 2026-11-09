@@ -15,5 +15,5 @@ build() {  # $1=arch  $2..=extra cmake args
   ninja -C "$REPO/build/ncnn-$arch" install
 }
 build armhf -DCMAKE_TOOLCHAIN_FILE="$REPO/cmake/toolchain-armhf.cmake" -DNCNN_ARM82=OFF
-build host
+build host -DNCNN_ARM82=OFF
 file "$REPO/third_party/ncnn-install/armhf/lib/libncnn.a" "$REPO/third_party/ncnn-install/host/lib/libncnn.a"

@@ -28,6 +28,7 @@ endfunction()
 
 m12_exe(hello tools/hello.cpp)
 
+
 # ---- ncnn (pinned 6afc736, static, built by scripts/build-ncnn.sh) ----
 if(HOST)
   set(NCNN_ARCH host)
@@ -47,9 +48,6 @@ else()
   target_link_options(ncnn_lib INTERFACE -fopenmp)
 endif()
 
-m12_exe(m12bench tools/m12bench.cpp)
-target_link_libraries(m12bench PRIVATE ncnn_lib)
-
 # ---- core library (shared by device binaries and host tests) ----
 set(M12CORE_SOURCES
   src/core/latest_frame.cpp
@@ -57,9 +55,11 @@ set(M12CORE_SOURCES
   src/image/yuyv.cpp
   src/camera/capture_loop.cpp
   src/camera/v4l2_camera.cpp
+  src/vision/retinaface.cpp
 )
 add_library(m12core STATIC ${M12CORE_SOURCES})
 target_include_directories(m12core PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(m12core PUBLIC ncnn_lib)
 if(HOST)
   target_link_libraries(m12core PUBLIC Threads::Threads)
 endif()
@@ -73,6 +73,7 @@ if(HOST)
     tests/test_line_queue.cpp
     tests/test_yuyv.cpp
     tests/test_capture_loop.cpp
+    tests/test_retinaface.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
@@ -80,6 +81,10 @@ if(HOST)
   add_test(NAME m12tests COMMAND m12tests WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
 
-# ---- device tools ----
+# ---- tools ----
+m12_exe(m12bench tools/m12bench.cpp)
+target_link_libraries(m12bench PRIVATE ncnn_lib)
 m12_exe(m12cap tools/m12cap.cpp)
 target_link_libraries(m12cap PRIVATE m12core)
+m12_exe(detect_file tools/detect_file.cpp)
+target_link_libraries(detect_file PRIVATE m12core)
