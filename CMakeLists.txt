@@ -65,6 +65,7 @@ set(M12CORE_SOURCES
   src/proto/commands.cpp
   src/sys/thermal.cpp
   src/sys/sysinfo.cpp
+  src/app/options.cpp
 )
 add_library(m12core STATIC ${M12CORE_SOURCES})
 target_include_directories(m12core PUBLIC ${CMAKE_SOURCE_DIR}/src)
@@ -89,6 +90,7 @@ if(HOST)
     tests/test_flat_json.cpp
     tests/test_commands.cpp
     tests/test_thermal.cpp
+    tests/test_options.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
@@ -114,3 +116,14 @@ if(HOST)
   target_include_directories(ref_stock_fd PRIVATE ${OPENCV_INC})
   target_link_libraries(ref_stock_fd PRIVATE ncnn_lib ${OPENCV_IMGPROC} ${OPENCV_CORE})
 endif()
+
+# ---- m12d main program ----
+execute_process(COMMAND git -c safe.directory=* rev-parse --short HEAD
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} OUTPUT_VARIABLE M12D_GIT
+                OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(NOT M12D_GIT)
+  set(M12D_GIT unknown)
+endif()
+m12_exe(m12d src/app/m12d.cpp)
+target_link_libraries(m12d PRIVATE m12core)
+target_compile_definitions(m12d PRIVATE M12D_GIT="${M12D_GIT}")

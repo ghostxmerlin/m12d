@@ -18,3 +18,8 @@ std::string hb_body(int temp_c, float fps, int tier, int64_t uptime_s, long mem_
 // Heartbeat line: {"hb":<hb_body>}
 std::string hb_json(int temp_c, float fps, int tier, int64_t uptime_s, long mem_avail_kb, uint64_t frames,
                     uint64_t reopens, uint64_t dropped_lines, float cpu_mhz);
+
+// JSON members (no surrounding braces) for the snap reply:
+// "f":<frame>,"path":"<path>","num":N,"face":[...]  (same face objects as det_json)
+std::string snap_members(uint64_t frame_id, const std::string& path, const std::vector<FaceBox>& faces, float scale,
+                         size_t max_faces, bool with_lm = true);

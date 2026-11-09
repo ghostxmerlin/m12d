@@ -57,3 +57,12 @@ std::string hb_json(int temp_c, float fps, int tier, int64_t uptime_s, long mem_
   return "{\"hb\":" + hb_body(temp_c, fps, tier, uptime_s, mem_avail_kb, frames, reopens, dropped_lines, cpu_mhz) +
          "}";
 }
+
+std::string snap_members(uint64_t frame_id, const std::string& path, const std::vector<FaceBox>& faces, float scale,
+                         size_t max_faces, bool with_lm) {
+  // Reuse det_json's face formatting: take its "num":..,"face":[...] span.
+  const std::string d = det_json(frame_id, faces, scale, max_faces, with_lm);
+  const size_t a = d.find("\"num\":");
+  const size_t b = d.rfind(",\"running\":");
+  return "\"f\":" + std::to_string(frame_id) + ",\"path\":\"" + path + "\"," + d.substr(a, b - a);
+}

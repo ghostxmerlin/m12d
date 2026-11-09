@@ -8,7 +8,8 @@
 // via on_line("", too_long=true).
 class LineSplitter {
  public:
-  explicit LineSplitter(size_t max_len = 512) : max_len_(max_len) {}
+  LineSplitter() : LineSplitter(512) {}
+  explicit LineSplitter(size_t max_len) : max_len_(max_len) {}
   void feed(const char* p, size_t n, const std::function<void(std::string_view line, bool too_long)>& on_line);
 
  private:

@@ -67,3 +67,11 @@ TEST_CASE("heartbeat") {
         "{\"t\":78,\"fps\":6.8,\"tier\":0,\"up\":123,\"mem\":70000,\"frames\":1000,\"reopens\":0,"
         "\"drop\":0,\"mhz\":1400}");
 }
+
+TEST_CASE("snap members") {
+  std::vector<FaceBox> faces = {face(10, 20, 30, 40, 0.98765f)};
+  CHECK(snap_members(9, "/tmp/m12d_snap.yuyv", faces, 2.0f, 10, false) ==
+        "\"f\":9,\"path\":\"/tmp/m12d_snap.yuyv\",\"num\":1,\"face\":[{\"x\":20.0,\"y\":40.0,\"w\":60.0,\"h\":80.0,"
+        "\"prob\":0.988}]");
+  CHECK(snap_members(3, "/tmp/s", {}, 2.0f, 10) == "\"f\":3,\"path\":\"/tmp/s\",\"num\":0,\"face\":[]");
+}

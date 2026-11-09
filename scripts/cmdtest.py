@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """Unified command-set test for m12d over TCP or a serial port (stdlib only).
 
   cmdtest.py --tcp HOST:PORT | --serial DEV [--baud 115200]
