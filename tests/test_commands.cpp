@@ -71,6 +71,8 @@ TEST_CASE("cfg with one bad arg applies nothing") {
   CHECK(t.h(R"({"id":10,"do":"cfg","max_faces":0})") == R"({"id":10,"ok":false,"err":"badarg"})");
   CHECK(t.h(R"({"id":11,"do":"cfg","det":"yes"})") == R"({"id":11,"ok":false,"err":"badarg"})");
   CHECK(t.h(R"({"id":12,"do":"cfg","sub":false,"fps_cap":-1})") == R"({"id":12,"ok":false,"err":"badarg"})");
+  CHECK(t.h(R"({"id":16,"do":"cfg","fps_cap":0.1})") == R"({"id":16,"ok":false,"err":"badarg"})");  // below 0.5
+  CHECK(t.h(R"({"id":17,"do":"cfg","fps_cap":1e-30})") == R"({"id":17,"ok":false,"err":"badarg"})");
   CHECK(t.sub == true);
   CHECK(t.h(R"({"id":13,"do":"cfg"})") == std::string("{\"id\":13,\"ok\":true,") + kDefaultCfg + "}");
 }

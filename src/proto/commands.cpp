@@ -93,7 +93,8 @@ std::string Dispatcher::handle(std::string_view line, bool too_long, bool& sub) 
         if (!as_int(v, 1, 10, mf)) return err(id, "badarg");
       } else if (k == "fps_cap") {
         const double* d = std::get_if<double>(&v);
-        if (!d || !std::isfinite(*d) || *d < 0 || *d > 30) return err(id, "badarg");
+        // 0 = no cap; otherwise 0.5..30 (tiny caps would park the detect thread for hours)
+        if (!d || !std::isfinite(*d) || !(*d == 0 || (*d >= 0.5 && *d <= 30))) return err(id, "badarg");
         fc = static_cast<float>(*d);
       }
     }

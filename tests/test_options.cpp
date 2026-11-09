@@ -57,6 +57,7 @@ TEST_CASE("bad value") {
                                                          {"--max-faces", "0"},
                                                          {"--max-faces", "11"},
                                                          {"--fps-cap", "31"},
+                                                         {"--fps-cap", "0.1"},
                                                          {"--threads", "0"},
                                                          {"--hb-ms", "10"},
                                                          {"--cap-fps", "4x"},

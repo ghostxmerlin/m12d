@@ -1,10 +1,10 @@
 // m12d — resident face detector for the UnitV2 M12 (phase 1).
 // Threads: capture (V4L2 -> LatestFrame), detect (RetinaFace every frame -> push),
 // io (serial + TCP, unified command set). Main thread: thermal guard + heartbeat.
-#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdio>
@@ -24,6 +24,7 @@
 #include "io/tcp_listener.h"
 #include "proto/commands.h"
 #include "proto/det_json.h"
+#include "sys/fileio.h"
 #include "sys/sysinfo.h"
 #include "sys/thermal.h"
 #include "vision/retinaface.h"
@@ -60,18 +61,7 @@ struct Snapshot {
   std::vector<FaceBox> faces;
 };
 
-bool write_snap(const Frame& f) {
-  int fd = ::open(kSnapPath, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC, 0644);
-  if (fd < 0) return false;
-  size_t off = 0;
-  while (off < f.yuyv.size()) {
-    ssize_t n = ::write(fd, f.yuyv.data() + off, f.yuyv.size() - off);
-    if (n <= 0) break;
-    off += static_cast<size_t>(n);
-  }
-  ::close(fd);
-  return off == f.yuyv.size();
-}
+bool write_snap(const Frame& f) { return write_file_private(kSnapPath, f.yuyv.data(), f.yuyv.size()); }
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -164,6 +154,7 @@ int main(int argc, char** argv) {
   V4L2Camera cam(opt.video, 640, 480, opt.cap_fps);
   std::thread cap_th([&] { capture_loop(cam, slot, g_stop, cap_stats); });
   std::thread io_th([&] { io->run(g_stop); });
+  std::atomic<int64_t> first_det_ms{0};
   std::thread det_th([&] {
     std::vector<uint8_t> rgb(320 * 240 * 3);
     std::deque<int64_t> done;  // completion times within the last 2 s
@@ -182,15 +173,22 @@ int main(int argc, char** argv) {
       yuyv_to_rgb_half(f.yuyv.data(), f.w, f.h, rgb.data());
       std::vector<FaceBox> faces = rf.detect(rgb.data(), f.w / 2, f.h / 2);
       emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm));
-      sh.det_frames++;
+      if (sh.det_frames++ == 0) first_det_ms = now_ms();
       done.push_back(now_ms());
       {
         std::lock_guard<std::mutex> lk(snap.mu);
         std::swap(snap.frame, f);
         snap.faces.swap(faces);
       }
-      const float cap = cfg.fps_cap;
-      if (cap > 0) std::this_thread::sleep_until(t0 + std::chrono::microseconds(static_cast<int64_t>(1e6f / cap)));
+      // fps cap: sleep to the frame period in <=100 ms slices so stop and cfg changes apply promptly.
+      for (;;) {
+        const float cap = cfg.fps_cap;
+        if (cap <= 0 || g_stop) break;
+        const auto due = t0 + std::chrono::microseconds(static_cast<int64_t>(1e6f / cap));
+        const auto now = Clock::now();
+        if (now >= due) break;
+        std::this_thread::sleep_for(std::min<Clock::duration>(due - now, std::chrono::milliseconds(100)));
+      }
     }
   });
 
@@ -213,7 +211,13 @@ int main(int argc, char** argv) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  std::fprintf(stderr, "m12d: stopping\n");
+  {
+    // Final stats line (parsed by scripts/measure.sh): average detection fps over the run.
+    // Measured from the first completed detection, so model load / camera open are excluded.
+    const unsigned long long n = sh.det_frames.load();
+    const double secs = n ? (now_ms() - first_det_ms.load()) / 1000.0 : 0.0;
+    std::fprintf(stderr, "m12d: stopping frames=%llu run_s=%.1f avg_fps=%.2f\n", n, secs, secs > 0 ? n / secs : 0.0);
+  }
   slot.stop();
   det_th.join();
   cap_th.join();

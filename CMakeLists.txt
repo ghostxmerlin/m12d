@@ -66,6 +66,7 @@ set(M12CORE_SOURCES
   src/sys/thermal.cpp
   src/sys/sysinfo.cpp
   src/app/options.cpp
+  src/sys/fileio.cpp
 )
 add_library(m12core STATIC ${M12CORE_SOURCES})
 target_include_directories(m12core PUBLIC ${CMAKE_SOURCE_DIR}/src)
@@ -91,6 +92,7 @@ if(HOST)
     tests/test_commands.cpp
     tests/test_thermal.cpp
     tests/test_options.cpp
+    tests/test_fileio.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
