@@ -1,0 +1,358 @@
+== os
+NAME=Buildroot
+VERSION=2020.02.8
+ID=buildroot
+VERSION_ID=2020.02.8
+PRETTY_NAME="Buildroot 2020.02.8"
+Linux version 4.9.84 (hanxiao@hanxiao-meow-server) (gcc version 8.2.1 20180802 (GNU Toolchain for the A-profile Architecture 8.2-2018-08 (arm-rel-8.23)) ) #212 SMP PREEMPT Tue Sep 7 21:57:23 CST 2021
+== cpu
+processor	: 0
+model name	: ARMv7 Processor rev 5 (v7l)
+BogoMIPS	: 16.71
+Features	: half thumb fastmult vfp edsp thumbee neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm 
+processor	: 1
+model name	: ARMv7 Processor rev 5 (v7l)
+BogoMIPS	: 16.71
+Features	: half thumb fastmult vfp edsp thumbee neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm 
+Hardware	: SStar Soc (Flattened Device Tree)
+scaling_governor: performance
+scaling_cur_freq: 1400000
+scaling_available_frequencies: 400000 600000 800000 1000000 1100000 1200000 1400000 
+scaling_available_governors: userspace powersave ondemand performance 
+cpuinfo_max_freq: 1400000
+== mem
+              total        used        free      shared  buff/cache   available
+Mem:         116740       38384       53304         128       25052       75412
+Swap:             0           0           0
+== disk
+Filesystem                Size      Used Available Use% Mounted on
+ubi:rootfs              410.1M    292.9M    117.2M  71% /
+devtmpfs                 56.0M         0     56.0M   0% /dev
+tmpfs                    57.0M         0     57.0M   0% /dev/shm
+tmpfs                    57.0M     80.0K     56.9M   0% /tmp
+tmpfs                    57.0M     48.0K     57.0M   0% /run
+cgroup                   57.0M         0     57.0M   0% /sys/fs/cgroup
+/dev/mmcblk0p1           29.7G     32.0K     29.7G   0% /media/sdcard
+== temp
+Temperature 74
+== ps
+ps: bad -o argument 'pcpu', supported arguments: user,group,comm,args,pid,ppid,pgid,tty,vsz,sid,stat,rss
+== libs
+lrwxrwxrwx    1 avahi    avahi           10 Sep  6  2021 /lib/ld-linux-armhf.so.3 -> ld-2.30.so
+-rwxr-xr-x    1 avahi    avahi       926456 Sep  6  2021 /lib/libc-2.30.so
+lrwxrwxrwx    1 avahi    avahi           12 Sep  6  2021 /lib/libc.so.6 -> libc-2.30.so
+libgomp.so.1
+libgomp.so.1.0.0
+libopencv_bgsegm.so
+libopencv_bgsegm.so.4.4
+libopencv_bgsegm.so.4.4.0
+libopencv_calib3d.so
+libopencv_calib3d.so.4.4
+libopencv_calib3d.so.4.4.0
+libopencv_core.so
+libopencv_core.so.4.4
+libopencv_core.so.4.4.0
+libopencv_features2d.so
+libopencv_features2d.so.4.4
+libopencv_features2d.so.4.4.0
+libopencv_flann.so
+libopencv_flann.so.4.4
+libopencv_flann.so.4.4.0
+libopencv_highgui.so
+libopencv_highgui.so.4.4
+libopencv_highgui.so.4.4.0
+libopencv_imgcodecs.so
+libopencv_imgcodecs.so.4.4
+libopencv_imgcodecs.so.4.4.0
+libopencv_imgproc.so
+libopencv_imgproc.so.4.4
+libopencv_imgproc.so.4.4.0
+libopencv_ml.so
+libopencv_ml.so.4.4
+libopencv_ml.so.4.4.0
+libopencv_plot.so
+libopencv_plot.so.4.4
+libopencv_plot.so.4.4.0
+libopencv_tracking.so
+libopencv_tracking.so.4.4
+libopencv_tracking.so.4.4.0
+libopencv_video.so
+libopencv_video.so.4.4
+libopencv_video.so.4.4.0
+libopencv_videoio.so
+libopencv_videoio.so.4.4
+libopencv_videoio.so.4.4.0
+libopencv_xfeatures2d.so
+libopencv_xfeatures2d.so.4.4
+libopencv_xfeatures2d.so.4.4.0
+libstdc++.so.6
+libstdc++.so.6.0.28
+libstdc++.so.6.0.28-gdb.py
+libzbar.la
+libzbar.so
+libzbar.so.0
+libzbar.so.0.2.0
+libgomp.so.1
+libgomp.so.1.0.0
+libopencv_calib3d.so
+libopencv_calib3d.so.3.4
+libopencv_calib3d.so.3.4.9
+libopencv_core.so
+libopencv_core.so.3.4
+libopencv_core.so.3.4.9
+libopencv_features2d.so
+libopencv_features2d.so.3.4
+libopencv_features2d.so.3.4.9
+libopencv_flann.so
+libopencv_flann.so.3.4
+libopencv_flann.so.3.4.9
+libopencv_highgui.so
+libopencv_highgui.so.3.4
+libopencv_highgui.so.3.4.9
+libopencv_imgcodecs.so
+libopencv_imgcodecs.so.3.4
+libopencv_imgcodecs.so.3.4.9
+libopencv_imgproc.so
+libopencv_imgproc.so.3.4
+libopencv_imgproc.so.3.4.9
+libopencv_ml.so
+libopencv_ml.so.3.4
+libopencv_ml.so.3.4.9
+libopencv_objdetect.so
+libopencv_objdetect.so.3.4
+libopencv_objdetect.so.3.4.9
+libopencv_photo.so
+libopencv_photo.so.3.4
+libopencv_photo.so.3.4.9
+libopencv_shape.so
+libopencv_shape.so.3.4
+libopencv_shape.so.3.4.9
+libopencv_stitching.so
+libopencv_stitching.so.3.4
+libopencv_stitching.so.3.4.9
+libopencv_superres.so
+libopencv_superres.so.3.4
+libopencv_superres.so.3.4.9
+libopencv_video.so
+libopencv_video.so.3.4
+libopencv_video.so.3.4.9
+libopencv_videoio.so
+libopencv_videoio.so.3.4
+libopencv_videoio.so.3.4.9
+libopencv_videostab.so
+libopencv_videostab.so.3.4
+libopencv_videostab.so.3.4.9
+libstdc++.so.6
+libstdc++.so.6.0.28
+libstdc++.so.6.0.28-gdb.py
+== video
+crw-rw----    1 root     root       81,   0 Jan  1  1970 /dev/video0
+/usr/bin/v4l2-ctl
+/usr/bin/ffmpeg
+/usr/bin/python3
+Python 3.8.6
+== payload
+/home/m5stack/payload:
+total 48
+drwxrwxr-x   11 avahi    avahi         1128 Jan  1  1970 .
+drwxr-sr-x    3 m5stack  wheel          224 Sep  6  2021 ..
+drwxr-xr-x    2 avahi    avahi         1632 Sep  6  2021 bin
+drwxr-xr-x    2 avahi    avahi          512 Jan  1  1970 data
+drwxrwxr-x    2 avahi    avahi          664 Sep  6  2021 images
+drwxr-xr-x    2 avahi    avahi         1736 Sep  6  2021 models
+drwxrwxr-x    2 avahi    avahi          256 Sep  6  2021 notebook
+-rwxr-xr-x    1 avahi    avahi          382 Sep  6  2021 run_notebook.py
+-rwxr-xr-x    1 avahi    avahi         1575 Sep  6  2021 server.py
+-rwxr-xr-x    1 avahi    avahi        30974 Sep  6  2021 server_core.py
+-rwxr-xr-x    1 root     root           212 Nov  9 10:10 server_log.txt
+-rwxr-xr-x    1 root     root            30 Jan  1  1970 server_system_config.json
+drwxr-xr-x    6 avahi    avahi          496 Sep  6  2021 static
+drwxr-xr-x    2 avahi    avahi          232 Sep  6  2021 templates
+drwxr-xr-x    2 avahi    avahi          240 Sep  6  2021 tools
+drwxr-xr-x    6 avahi    avahi          424 Sep  6  2021 uploads
+
+/home/m5stack/payload/bin:
+total 56684
+drwxr-xr-x    2 avahi    avahi         1632 Sep  6  2021 .
+drwxrwxr-x   11 avahi    avahi         1128 Jan  1  1970 ..
+-rwxr-xr-x    1 avahi    avahi      3023204 Sep  6  2021 audio_fft
+-rwxr-xr-x    1 avahi    avahi           19 Sep  6  2021 buildtime.txt
+-rwxr-xr-x    1 avahi    avahi      2911704 Sep  6  2021 camera_stream
+-rwxrwxr-x    1 avahi    avahi      3106120 Sep  6  2021 classifier_online
+-rwxr-xr-x    1 avahi    avahi      3050448 Sep  6  2021 code_detector
+-rwxr-xr-x    1 avahi    avahi      3118588 Sep  6  2021 color_tracker
+-rwxr-xr-x    1 avahi    avahi      3106668 Sep  6  2021 face_detector
+-rwxr-xr-x    1 avahi    avahi      3505484 Sep  6  2021 face_recognition
+-rwxr-xr-x    1 avahi    avahi      3066664 Sep  6  2021 lane_line_tracker
+-rwxrwxr-x    1 avahi    avahi      2958628 Sep  6  2021 line_tracker
+-rwxrwxr-x    1 avahi    avahi      2834780 Sep  6  2021 mosse_tracker
+-rwxr-xr-x    1 avahi    avahi      3052524 Sep  6  2021 motion_tracker
+-rwxr-xr-x    1 avahi    avahi      3256092 Sep  6  2021 object_recognition
+-rwxr-xr-x    1 avahi    avahi      3212868 Sep  6  2021 online_classifier
+-rwxr-xr-x    1 avahi    avahi      3011568 Sep  6  2021 shape_detector
+-rwxr-xr-x    1 avahi    avahi      3207868 Sep  6  2021 shape_matching
+-rwxr-xr-x    1 avahi    avahi      2953916 Sep  6  2021 target_tracker
+-rwxr-xr-x    1 avahi    avahi      3010696 Sep  6  2021 test
+-rwxrwxr-x    1 avahi    avahi      2709188 Sep  6  2021 video_stream
+-rwxrwxr-x    1 avahi    avahi      2897672 Sep  6  2021 yolo_fastest
+
+/home/m5stack/payload/models:
+total 18636
+drwxr-xr-x    2 avahi    avahi         1736 Sep  6  2021 .
+drwxrwxr-x   11 avahi    avahi         1128 Jan  1  1970 ..
+-rw-r--r--    1 avahi    avahi       386860 Sep  6  2021 angle_op.bin
+-rw-r--r--    1 avahi    avahi         8831 Sep  6  2021 angle_op.param
+-rw-r--r--    1 avahi    avahi      2629512 Sep  6  2021 crnn_lite_op.bin
+-rw-r--r--    1 avahi    avahi        17364 Sep  6  2021 crnn_lite_op.param
+-rw-r--r--    1 avahi    avahi      1872684 Sep  6  2021 dbnet_op.bin
+-rw-r--r--    1 avahi    avahi        12168 Sep  6  2021 dbnet_op.param
+-rw-r--r--    1 avahi    avahi       853632 Sep  6  2021 mnet.25-opt.bin
+-rw-r--r--    1 avahi    avahi        12176 Sep  6  2021 mnet.25-opt.param
+-rw-r--r--    1 avahi    avahi      4091592 Sep  6  2021 mobilefacenet.bin
+-rw-r--r--    1 avahi    avahi        20288 Sep  6  2021 mobilefacenet.param
+-rw-r--r--    1 avahi    avahi       512400 Sep  6  2021 mobilenet_ssd_code_detector_ncnn.bin
+-rw-r--r--    1 avahi    avahi        25002 Sep  6  2021 mobilenet_ssd_code_detector_ncnn.param
+-rw-r--r--    1 avahi    avahi      1901612 Sep  6  2021 nanodet_m.bin
+-rw-r--r--    1 avahi    avahi        13622 Sep  6  2021 nanodet_m.param
+-rw-r--r--    1 avahi    avahi      5451540 Sep  6  2021 shufflenet_v2_x0.5-opt.bin
+-rw-r--r--    1 avahi    avahi        16673 Sep  6  2021 shufflenet_v2_x0.5-opt.param
+-rw-r--r--    1 avahi    avahi        12936 Sep  6  2021 srnet.bin
+-rw-r--r--    1 avahi    avahi         2876 Sep  6  2021 srnet.param
+-rw-rw-r--    1 avahi    avahi      1182508 Sep  6  2021 yolo-fastest.bin
+-rw-rw-r--    1 avahi    avahi        17447 Sep  6  2021 yolo-fastest.param
+== sha
+690d0ef6e82334d7a8f084bc0f9d5a2073a3671ad4ce9060665f7bdc8a82a25d  models/mnet.25-opt.bin
+bfccc99e2461b46e37b35141060c5b9be4e88bd6b135c6ea7a161fc3b4912a6f  models/mnet.25-opt.param
+9638dcfee63785b87a5ab0b0ed9f9dffe93e4b3718e5ea1b537dd5243a661b87  models/mobilefacenet.bin
+dfea20c1a5c2adef2126296f42771ecf33bfa9a50cbe0f7ca8864c7bd1a4bbeb  models/mobilefacenet.param
+de713eded09a4797caecade29a5d68975df363960dbc324b51537d5e92aa3a5b  bin/face_detector
+4cbdcc26903effc52638e0a85e7c463991087235e8b4e70d64b35e150ba05d74  server_core.py
+ddc4c7d498af429ec90f2617ba353d037077cfe676223bee61f7a45275ea6e9d  server.py
+== net
+BusyBox v1.31.1 (2021-01-18 22:43:12 CST) multi-call binary.
+
+Usage: ip [OPTIONS] address|route|link|tunnel|neigh|rule [ARGS]
+
+OPTIONS := -f[amily] inet|inet6|link | -o[neline]
+
+ip addr add|del IFADDR dev IFACE | show|flush [dev IFACE] [to PREFIX]
+ip route list|flush|add|del|change|append|replace|test ROUTE
+ip link set IFACE [up|down] [arp on|off] [multicast on|off]
+	[promisc on|off] [mtu NUM] [name NAME] [qlen NUM] [address MAC]
+	[master IFACE | nomaster]
+ip tunnel add|change|del|show [NAME]
+	[mode ipip|gre|sit] [remote ADDR] [local ADDR] [ttl TTL]
+ip neigh show|flush [to PREFIX] [dev DEV] [nud STATE]
+ip rule [list] | add|del SELECTOR ACTION
+br0       Link encap:Ethernet  HWaddr XX:XX:XX:XX:XX:XX  
+          inet addr:10.254.239.1  Bcast:10.254.239.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:222 errors:0 dropped:25 overruns:0 frame:0
+          TX packets:152 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:37072 (36.2 KiB)  TX bytes:59684 (58.2 KiB)
+
+eth0      Link encap:Ethernet  HWaddr XX:XX:XX:XX:XX:XX  
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:224 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:168 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:40312 (39.3 KiB)  TX bytes:60740 (59.3 KiB)
+          Interrupt:35 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:164 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:164 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1 
+          RX bytes:10296 (10.0 KiB)  TX bytes:10296 (10.0 KiB)
+
+wlan0     Link encap:Ethernet  HWaddr XX:XX:XX:XX:XX:XX  
+          inet addr:192.168.x.x  Bcast:192.168.x.x  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:274 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:47 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:58419 (57.0 KiB)  TX bytes:5716 (5.5 KiB)
+
+wlan1     Link encap:Ethernet  HWaddr XX:XX:XX:XX:XX:XX  
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:81 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+bridge name	bridge id		STP enabled	interfaces
+br0		8000.00301bba02db	no		eth0
+							wlan1
+== init
+S01syslogd
+S02klogd
+S02sysctl
+S05avahi-setup.sh
+S05initled
+S06wifipwr
+S100setup-priv
+S110thermal
+S20urandom
+S21haveged
+S23oadfsko
+S30cgroupfs
+S30dbus
+S40network
+S41dhcpcd
+S49ntp
+S50avahi-daemon
+S50mosquitto
+S50nginx
+S50sshd
+S80dhcp-relay
+S80dhcp-server
+S80dnsmasq
+S81mdev
+S85runpayload
+S90wifi-conf
+S95ip-conf
+S96ntpdate
+automount.sh
+rcK
+rcS
+::sysinit:/bin/mount -t proc proc /proc
+::sysinit:/bin/mount -o remount,rw /
+::sysinit:/bin/mkdir -p /dev/pts /dev/shm
+::sysinit:/bin/mount -a
+::sysinit:/sbin/swapon -a
+null::sysinit:/bin/ln -sf /proc/self/fd /dev/fd
+null::sysinit:/bin/ln -sf /proc/self/fd/0 /dev/stdin
+null::sysinit:/bin/ln -sf /proc/self/fd/1 /dev/stdout
+null::sysinit:/bin/ln -sf /proc/self/fd/2 /dev/stderr
+::sysinit:/bin/hostname -F /etc/hostname
+::sysinit:/etc/init.d/rcS
+console::respawn:/sbin/getty -L  console 0 vt100 # GENERIC_SERIAL
+::shutdown:/etc/init.d/rcK
+::shutdown:/sbin/swapoff -a
+::shutdown:/bin/umount -a -r
+== rcS/payload start
+/etc/init.d/S90wifi-conf
+/etc/init.d/automount.sh
+/etc/init.d/S85runpayload
+/etc/init.d/S110thermal
+== gpio
+export
+gpio0
+gpio1
+gpio14
+gpio2
+gpiochip0
+unexport
+== uart
+crw-rw----    1 root     root      250,   0 Jan  1  1970 /dev/ttyS0
+crw-rw----    1 root     root      250,   1 Jan  1  1970 /dev/ttyS1
+crw-rw----    1 root     root      250,   2 Jan  1  1970 /dev/ttyS2
+crw-rw----    1 root     root      250,   3 Jan  1  1970 /dev/ttyS3
+== usb
+Bus 002 Device 002: ID 0bda:5842
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 0bda:f179
+Bus 002 Device 001: ID 1d6b:0002

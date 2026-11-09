@@ -1,0 +1,24 @@
+#!/bin/sh
+
+case "$1" in
+        start)
+                printf "Starting wpa_supplicant: "
+                /usr/sbin/wpa_supplicant -B -Dnl80211 -iwlan0 -c /etc/wpa_supplicant.conf  &> /tmp/wpa.info &
+                /usr/sbin/hostapd -d /etc/hostapd.conf -B &> /tmp/hostapd.info &
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        stop)
+                printf "Shutting down wpa_supplicant: "
+                /usr/bin/killall wpa_supplicant
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        restart|reload)
+                $0 stop
+                $0 start
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart}"
+                exit 1
+esac
+
+exit 0

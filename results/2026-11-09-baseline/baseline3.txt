@@ -1,0 +1,218 @@
+Driver Info:
+	Driver name      : uvcvideo
+	Card type        : USB Camera
+	Bus info         : usb-mstar-1
+	Driver version   : 4.9.84
+	Capabilities     : 0x84200001
+		Video Capture
+		Streaming
+		Extended Pix Format
+		Device Capabilities
+	Device Caps      : 0x04200001
+		Video Capture
+		Streaming
+		Extended Pix Format
+Priority: 2
+Video input : 0 (Camera 1: ok)
+Format Video Capture:
+	Width/Height      : 800/600
+	Pixel Format      : 'YUYV' (YUYV 4:2:2)
+	Field             : None
+	Bytes per Line    : 1600
+	Size Image        : 960000
+	Colorspace        : sRGB
+	Transfer Function : Default (maps to sRGB)
+	YCbCr/HSV Encoding: Default (maps to ITU-R 601)
+	Quantization      : Default (maps to Limited Range)
+	Flags             : 
+Crop Capability Video Capture:
+	Bounds      : Left 0, Top 0, Width 800, Height 600
+	Default     : Left 0, Top 0, Width 800, Height 600
+	Pixel Aspect: 1/1
+Selection Video Capture: crop_default, Left 0, Top 0, Width 800, Height 600, Flags: 
+Selection Video Capture: crop_bounds, Left 0, Top 0, Width 800, Height 600, Flags: 
+Streaming Parameters Video Capture:
+	Capabilities     : timeperframe
+	Frames per second: 20.000 (20/1)
+	Read buffers     : 0
+                     brightness 0x00980900 (int)    : min=-64 max=64 step=1 default=0 value=0
+                       contrast 0x00980901 (int)    : min=0 max=100 step=1 default=50 value=50
+                     saturation 0x00980902 (int)    : min=0 max=100 step=1 default=64 value=64
+== fmts
+ioctl: VIDIOC_ENUM_FMT
+	Type: Video Capture
+
+	[0]: 'YUYV' (YUYV 4:2:2)
+		Size: Discrete 800x600
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 640x480
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 160x120
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 320x240
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 352x288
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 1024x768
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 1280x720
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 1280x960
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 1920x1080
+			Interval: Discrete 0.200s (5.000 fps)
+	[1]: 'MJPG' (Motion-JPEG, compressed)
+		Size: Discrete 800x600
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 640x480
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 160x120
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 320x240
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 352x288
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 1024x768
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 1280x720
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 1280x960
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+		Size: Discrete 1920x1080
+			Interval: Discrete 0.033s (30.000 fps)
+			Interval: Discrete 0.040s (25.000 fps)
+			Interval: Discrete 0.050s (20.000 fps)
+			Interval: Discrete 0.067s (15.000 fps)
+			Interval: Discrete 0.100s (10.000 fps)
+			Interval: Discrete 0.200s (5.000 fps)
+== gpio14
+out
+0
+== thermal
+import time
+import os
+import sys
+
+while 1:
+    temp_out = int(open('/sys/devices/system/cpu/cpufreq/temp_out', 'r').read()[5:])
+    if temp_out < 95:
+        print('Current temperature:', temp_out)
+        time.sleep(60)
+        continue
+
+    open('/sys/devices/system/cpu/cpufreq/policy0/scaling_governor', 'w').write('powersave\n')
+    
+    try :
+        import subprocess
+        import traceback
+        import threading
+
+        with subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE) as proc:
+            output, error = proc.communicate()
+            for line in output.splitlines():
+                if 'server.py' in str(line) or \
+                    './bin/' in str(line) or \
+                        'server_core.py' in str(line):
+                    pid = int(line.split(None, 1)[0])
+                    os.kill(pid, 9)
+
+        from flask import Flask, render_template, Response, request, send_from_directory, url_for
+        app = Flask(__name__)
+
+        @app.route('/')
+        def index():
+            try:
+                return render_template('index.html')
+            except Exception:
+                return Response(traceback.print_exc())
+            
+        with subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE) as proc:
+            output, error = proc.communicate()
+            for line in output.splitlines():
+                if 'server.py' in str(line) or \
+                    './bin/' in str(line) or \
+                    'server_core.py' in str(line):
+                    pid = int(line.split(None, 1)[0])
+                    os.kill(pid, 9)
+
+        def blinky():
+            open('/sys/class/gpio/gpio0/direction', 'w').write('out\n')
+            while True:
+                open('/sys/class/gpio/gpio0/value', 'w').write('0\n')
+                time.sleep(0.5)
+                open('/sys/class/gpio/gpio0/value', 'w').write('1\n')
+                time.sleep(0.5)
+
+        threading.Thread(target = blinky).start()
+
+        app.run('0.0.0.0', 80)
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except Exception as e:
+        print(e)
+        pass

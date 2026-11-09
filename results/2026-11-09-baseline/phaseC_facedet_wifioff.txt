@@ -1,0 +1,51 @@
+start face_detector: 18:46:01
+{"description": "Detects faces in the screen and gives 5-point landmark.", "title": "Face Detector"}
+  605 root     /sbin/syslogd -n
+  609 root     /sbin/klogd -n
+  659 root     /usr/sbin/haveged -w 1024 -r 0
+  735 root     /sbin/dhcpcd -f /etc/dhcpcd.conf
+  740 root     /usr/sbin/ntpd -g
+  793 root     /usr/sbin/sshd
+  805 nobody   /usr/sbin/dnsmasq
+  929 root     /sbin/getty -L console 0 vt100
+ 1436 root     ./bin/face_detector
+00:13:13 Temperature 67 Temp=66 cpu=96%
+00:13:23 Temperature 67 Temp=67 cpu=96%
+00:13:33 Temperature 64 Temp=64 cpu=40%
+00:13:43 Temperature 64 Temp=64 cpu=0%
+00:13:53 Temperature 66 Temp=64 cpu=0%
+00:14:03 Temperature 64 Temp=64 cpu=0%
+00:14:13 Temperature 64 Temp=64 cpu=0%
+00:14:24 Temperature 64 Temp=64 cpu=0%
+00:14:34 Temperature 63 Temp=64 cpu=0%
+00:14:44 Temperature 64 Temp=64 cpu=0%
+00:14:54 Temperature 64 Temp=64 cpu=0%
+00:15:04 Temperature 64 Temp=64 cpu=0%
+00:15:14 Temperature 64 Temp=64 cpu=0%
+00:15:24 Temperature 64 Temp=64 cpu=0%
+00:15:34 Temperature 64 Temp=64 cpu=0%
+00:15:44 Temperature 64 Temp=64 cpu=0%
+00:15:54 Temperature 64 Temp=64 cpu=0%
+00:16:04 Temperature 64 Temp=63 cpu=0%
+00:16:14 Temperature 64 Temp=64 cpu=0%
+00:16:24 Temperature 64 Temp=64 cpu=0%
+00:16:34 Temperature 64 Temp=64 cpu=0%
+00:16:44 Temperature 63 Temp=64 cpu=0%
+00:16:54 Temperature 64 Temp=64 cpu=0%
+00:17:04 Temperature 64 Temp=63 cpu=0%
+00:17:14 Temperature 63 Temp=63 cpu=0%
+00:17:24 Temperature 63 Temp=64 cpu=0%
+00:17:34 Temperature 63 Temp=63 cpu=0%
+00:17:44 Temperature 63 Temp=63 cpu=0%
+00:17:54 Temperature 64 Temp=63 cpu=0%
+00:18:04 Temperature 63 Temp=64 cpu=0%
+  605 root     /sbin/syslogd -n
+  609 root     /sbin/klogd -n
+  659 root     /usr/sbin/haveged -w 1024 -r 0
+  735 root     /sbin/dhcpcd -f /etc/dhcpcd.conf
+  740 root     /usr/sbin/ntpd -g
+  793 root     /usr/sbin/sshd
+  805 nobody   /usr/sbin/dnsmasq
+  929 root     /sbin/getty -L console 0 vt100
+switch to standby (audio_fft): 18:51:06
+

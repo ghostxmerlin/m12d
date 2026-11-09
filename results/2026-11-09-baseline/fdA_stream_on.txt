@@ -1,0 +1,49 @@
+started pid=1855 stream=1 at 00:23:05
+00:23:15 temp=67 cpu=96% alive
+00:23:25 temp=68 cpu=96% alive
+00:23:35 temp=68 cpu=96% alive
+00:23:45 temp=68 cpu=96% alive
+00:23:55 temp=70 cpu=96% alive
+00:24:06 temp=71 cpu=96% alive
+00:24:16 temp=71 cpu=97% alive
+00:24:26 temp=71 cpu=97% alive
+00:24:36 temp=71 cpu=96% alive
+00:24:46 temp=71 cpu=96% alive
+00:24:56 temp=71 cpu=96% alive
+00:25:06 temp=72 cpu=96% alive
+00:25:16 temp=72 cpu=96% alive
+00:25:26 temp=74 cpu=96% alive
+00:25:36 temp=74 cpu=96% alive
+00:25:46 temp=74 cpu=96% alive
+00:25:57 temp=74 cpu=96% alive
+00:26:07 temp=74 cpu=96% alive
+00:26:17 temp=74 cpu=97% alive
+00:26:27 temp=75 cpu=97% alive
+00:26:37 temp=75 cpu=96% alive
+00:26:47 temp=75 cpu=96% alive
+00:26:57 temp=75 cpu=97% alive
+00:27:07 temp=75 cpu=95% alive
+00:27:17 temp=75 cpu=96% alive
+00:27:27 temp=75 cpu=96% alive
+00:27:38 temp=75 cpu=96% alive
+00:27:48 temp=77 cpu=97% alive
+00:27:58 temp=77 cpu=97% alive
+00:28:08 temp=77 cpu=97% alive
+== status
+fd_exit=143 at 00:28:08
+== stderr (non-total lines)
+function: Face Detector start.
+Copyright 2021 M5Stack Technology Co., Ltd. All rights reserved.
+Sending thread start
+: Success
+PIPESend thread start
+: Success
+PIPERecv thread start
+: Success
+== last totals
+total 147.0
+total 149.7
+total 165.5
+frames=2052
+/tmp/fd_root.sh:24: command not found: pkill
+results=2052 imgs=2051

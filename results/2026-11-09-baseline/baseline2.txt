@@ -1,0 +1,159 @@
+== top
+Mem: 76240K used, 40500K free, 128K shrd, 3844K buff, 32968K cached
+CPU:   0% usr   0% sys   0% nic 100% idle   0% io   0% irq   0% sirq
+Load average: 1.39 0.42 0.15 1/82 978
+  PID  PPID USER     STAT   VSZ %VSZ %CPU COMMAND
+  977   976 m5stack  R     2296   2%   0% top -b -n 1
+  852   816 root     S    49416  42%   0% python3 server_core.py 816
+  739     1 root     S     7424   6%   0% /usr/sbin/ntpd -g
+  658     1 root     S     7228   6%   0% /usr/sbin/haveged -w 1024 -r 0
+  816     1 root     S     6824   6%   0% python3 /home/m5stack/payload/server.py
+  646     1 root     S     6196   5%   0% python3 /etc/thermal/check_thermal.py
+  837     1 root     S     5380   5%   0% /usr/sbin/hostapd -d /etc/hostapd.conf -B
+  969   794 root     S     5124   4%   0% sshd: m5stack [priv]
+  972   969 m5stack  S     5124   4%   0% sshd: m5stack@notty
+  841     1 root     S     5104   4%   0% /usr/sbin/wpa_supplicant -B -Dnl80211 -iwlan0 -c /etc/wpa_supplicant.conf
+  794     1 root     S     5008   4%   0% /usr/sbin/sshd
+  973   972 m5stack  S     3480   3%   0% zsh -c echo ZWNobyAiPT0gdG9wIjsgdG9wIC1iIC1uIDEgfCBhd2sgJ05SPD0yNScKZWNobyAiPT0gcHMiOyBwcyAtbyBwaWQscHBpZCx1c2VyLHJzcyxzdGF0LGFyZ3MgfCBhd2sgJyEvXFtrfFxbLycKZWNobyAiPT0gdjRsMiI7IHY0bDItY3RsIC1kIC9kZXYvdmlkZW8wIC0tbGlzdC1mb3JtYXRzLWV4dCAyPiYxIHwgYXdrICdOUjw9NjAnOyB2NGwyLWN0bCAtZCAvZGV2L3ZpZGVvMCAtViAyPiYxCmVjaG8gIj09IFMwNndpZmlwd3IiOyBjYXQgL2V0Yy9pbml0LmQvUzA2d2lmaXB3cgplY2hvICI9PSBTODVydW5wYXlsb2FkIjsg
+  976   973 m5stack  S     3480   3%   0% sh
+  751     1 avahi    S     2736   2%   0% avahi-daemon: running [unitv2.local]
+  716     1 dbus     S     2320   2%   0% dbus-daemon --system
+    1     0 root     S     2296   2%   0% {linuxrc} init
+  604     1 root     S     2296   2%   0% /sbin/syslogd -n
+  608     1 root     S     2296   2%   0% /sbin/klogd -n
+  868     1 root     S     2296   2%   0% watch -t -n 30 ntpdate -u time.windows.com
+  869     1 root     S     2296   2%   0% /sbin/getty -L console 0 vt100
+  978   976 m5stack  S     2296   2%   0% awkNR <=25
+== ps
+PID   PPID  USER     RSS  STAT COMMAND
+    1     0 root      532 S    {linuxrc} init
+  604     1 root      344 S    /sbin/syslogd -n
+  608     1 root      344 S    /sbin/klogd -n
+  646     1 root     4280 S    python3 /etc/thermal/check_thermal.py
+  658     1 root     3736 S    /usr/sbin/haveged -w 1024 -r 0
+  716     1 dbus     1064 S    dbus-daemon --system
+  734     1 root     1140 S    /sbin/dhcpcd -f /etc/dhcpcd.conf
+  739     1 root     1940 S    /usr/sbin/ntpd -g
+  794     1 root     1772 S    /usr/sbin/sshd
+  804     1 nobody   1052 S    /usr/sbin/dnsmasq
+  816     1 root     4988 S    python3 /home/m5stack/payload/server.py
+  837     1 root     2240 S    /usr/sbin/hostapd -d /etc/hostapd.conf -B
+  841     1 root     1900 S    /usr/sbin/wpa_supplicant -B -Dnl80211 -iwlan0 -c /etc/wpa_supplicant.conf
+  852   816 root      15m S    python3 server_core.py 816
+  868     1 root     1040 S    watch -t -n 30 ntpdate -u time.windows.com
+  869     1 root      372 S    /sbin/getty -L console 0 vt100
+  972   969 m5stack  1820 S    sshd: m5stack@notty
+  973   972 m5stack  1464 S    zsh -c echo ZWNobyAiPT0gdG9wIjsgdG9wIC1iIC1uIDEgfCBhd2sgJ05SPD0yNScKZWNobyAiPT0gcHMiOyBwcyAtbyBwaWQscHBpZCx1c2VyLHJzcyxzdGF0LGFyZ3MgfCBhd2sgJyEvXFtrfFxbLycKZWNobyAiPT0gdjRsMiI7IHY0bDItY3RsIC1kIC9kZXYvdmlkZW8wIC0tbGlzdC1mb3JtYXRzLWV4dCAyPiYxIHwgYXdrICdOUjw9NjAnOyB2NGwyLWN0bCAtZCAvZGV2L3ZpZGVvMCAtViAyPiYxCmVjaG8gIj09IFMwNndpZmlwd3IiOyBjYXQgL2V0Yy9pbml0LmQvUzA2d2lmaXB3cgplY2hvICI9PSBTODVydW5wYXlsb2FkIjsgY2F0IC9ldGMvaW5pdC5kL1M4NXJ1bnBheWxvYWQKZWNobyAiPT0gUzExMHRoZXJtYWwiOyBjYXQgL2V0Yy9pbml0LmQvUzExMHRoZXJtYWwKZWNobyAiPT0gUzkwd2lmaS1jb25mIjsgY2F0IC9ldGMvaW5pdC5kL1M5MHdpZmktY29uZiB8IGF3ayAnTlI8PTYwJwplY2hvICI9PSBjZmciOyBjYXQgL2hvbWUvbTVzdGFjay9wYXlsb2FkL3NlcnZlcl9zeXN0ZW1fY29uZmlnLmpzb247IGVjaG87IGNhdCAvaG9tZS9tNXN0YWNrL3BheWxvYWQvc2VydmVyX2xvZy50eHQKZWNobyAiPT0gZ3JvdXBzIjsgaWQK | base64 -d | sh
+  976   973 m5stack  1512 S    sh
+  979   976 m5stack  1184 R    ps -o pid,ppid,user,rss,stat,args
+== v4l2
+Failed to open /dev/video0: Permission denied
+Failed to open /dev/video0: Permission denied
+== S06wifipwr
+#!/bin/sh
+
+case "$1" in
+        start)
+                printf "Turning on WiFI Power: "
+                /bin/echo 14 > /sys/class/gpio/export
+                /bin/echo out > /sys/class/gpio/gpio14/direction
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        stop)
+                printf "Turning off WiFI Power: "
+                /bin/echo 14 > /sys/class/gpio/unexport
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        restart|reload)
+                $0 stop
+                $0 start
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart}"
+                exit 1
+esac
+
+exit 0== S85runpayload
+#!/bin/sh
+
+case "$1" in
+        start)
+                printf "Starting payload: "
+                cd /home/m5stack/payload
+                python3 /home/m5stack/payload/server.py &> /tmp/payload.info &
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+
+                ;;
+        stop)
+                printf "Stoping payload: "
+                killall -9 python3
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        restart|reload)
+                $0 stop
+                $0 start
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart}"
+                exit 1
+esac
+
+exit 0== S110thermal
+#!/bin/sh
+
+case "$1" in
+        start)
+                printf "Starting overheat checking: "
+
+                python3 /etc/thermal/check_thermal.py &> /dev/null &
+
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        stop)
+                printf "Stoping ntpdate: "
+
+                killall -9 python3
+
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        restart|reload)
+                $0 stop
+                $0 start
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart}"
+                exit 1
+esac
+
+exit 0== S90wifi-conf
+#!/bin/sh
+
+case "$1" in
+        start)
+                printf "Starting wpa_supplicant: "
+                /usr/sbin/wpa_supplicant -B -Dnl80211 -iwlan0 -c /etc/wpa_supplicant.conf  &> /tmp/wpa.info &
+                /usr/sbin/hostapd -d /etc/hostapd.conf -B &> /tmp/hostapd.info &
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        stop)
+                printf "Shutting down wpa_supplicant: "
+                /usr/bin/killall wpa_supplicant
+                [ $? = 0 ] && echo "OK" || echo "FAIL"
+                ;;
+        restart|reload)
+                $0 stop
+                $0 start
+                ;;
+        *)
+                echo "Usage: $0 {start|stop|restart}"
+                exit 1
+esac
+
+exit 0
+== cfg
+{"boot_func": "camera_stream"}
+1970-01-01 00:00:12,904 - [line:798] - INFO: Server PID = 816, Core PID = 852
+1970-01-01 00:00:12,922 - [line:836] - INFO: Wait for process to start
+2026-11-09 10:10:04,983 - [line:413] - INFO: Client connected.
+== groups
+uid=1005(m5stack) gid=10(wheel) groups=10(wheel)
