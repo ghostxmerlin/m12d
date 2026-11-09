@@ -88,3 +88,14 @@ m12_exe(m12cap tools/m12cap.cpp)
 target_link_libraries(m12cap PRIVATE m12core)
 m12_exe(detect_file tools/detect_file.cpp)
 target_link_libraries(detect_file PRIVATE m12core)
+
+# ---- host-only stock reference oracle (B-layer parity), links host OpenCV ----
+if(HOST)
+  # Only libopencv-{core,imgproc}-dev are installed (no OpenCVConfig.cmake), so locate directly.
+  find_path(OPENCV_INC opencv2/core.hpp PATH_SUFFIXES opencv4 REQUIRED)
+  find_library(OPENCV_CORE opencv_core REQUIRED)
+  find_library(OPENCV_IMGPROC opencv_imgproc REQUIRED)
+  add_executable(ref_stock_fd tools/ref/ref_stock_fd.cpp)
+  target_include_directories(ref_stock_fd PRIVATE ${OPENCV_INC})
+  target_link_libraries(ref_stock_fd PRIVATE ncnn_lib ${OPENCV_IMGPROC} ${OPENCV_CORE})
+endif()
