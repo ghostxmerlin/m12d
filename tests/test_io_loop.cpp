@@ -164,3 +164,89 @@ TEST_CASE("stop exits") {
   delete r;  // sets stop and joins
   CHECK(duration_cast<milliseconds>(steady_clock::now() - t0).count() < 300);
 }
+
+// ---- Unified command set: the same script over serial (pty) and TCP ----
+#include <fstream>
+#include <vector>
+#include "proto/commands.h"
+#include "proto/det_json.h"
+
+namespace {
+// Script lines: raw request, "@crlf <req>" (sent with \r\n) or "@long N" (N junk bytes).
+std::vector<std::string> load_script(const char* path) {
+  std::ifstream f(path);
+  std::vector<std::string> out;
+  std::string line;
+  while (std::getline(f, line)) {
+    if (line.rfind("@crlf ", 0) == 0)
+      out.push_back(line.substr(6) + "\r\n");
+    else if (line.rfind("@long ", 0) == 0)
+      out.push_back(std::string(std::stoul(line.substr(6)), 'a') + "\n");
+    else if (!line.empty())
+      out.push_back(line + "\n");
+  }
+  return out;
+}
+std::vector<std::string> load_lines(const char* path) {
+  std::ifstream f(path);
+  std::vector<std::string> out;
+  std::string line;
+  while (std::getline(f, line))
+    if (!line.empty()) out.push_back(line);
+  return out;
+}
+std::vector<std::string> run_script(int fd, const std::vector<std::string>& script) {
+  std::vector<std::string> replies;
+  for (const std::string& req : script) {
+    write_all(fd, req);
+    std::string r = read_lines(fd, 1, 2000);
+    if (!r.empty() && r.back() == '\n') r.pop_back();
+    replies.push_back(r);
+  }
+  return replies;
+}
+}  // namespace
+
+TEST_CASE("same replies over serial and tcp") {
+  const auto script = load_script("tests/cmd_script.jsonl");
+  const auto expected = load_lines("tests/cmd_expected.jsonl");
+  REQUIRE(script.size() == expected.size());
+
+  Pty pty;
+  int sfd = open_serial(pty.slave_path, 115200);
+  int lfd = open_tcp_listener(0, 4);
+  REQUIRE(sfd >= 0);
+  REQUIRE(lfd >= 0);
+  const int port = listen_port(lfd);
+  RuntimeCfg cfg;
+  StatusSource src;
+  src.hb_body = [] { return hb_body(70, 6.8f, 0, 1, 70000, 1, 0, 0, 1400); };
+  src.version = "0.1.0";
+  src.git = "test";
+  src.models = {"mnet.25-opt"};
+  Dispatcher disp(cfg, src);
+  IoLoop* loop = nullptr;
+  loop = new IoLoop(sfd, lfd, 2, [&](ChanId c, std::string_view line, bool too_long) {
+    bool sub = loop->subscribed(c);
+    std::string r = disp.handle(line, too_long, sub);
+    loop->set_subscribed(c, sub);
+    return r;
+  });
+  std::atomic<bool> stop{false};
+  std::thread th([&] { loop->run(stop); });
+
+  auto serial_replies = run_script(pty.master, script);
+  int c = tcp_connect(port);
+  REQUIRE(c >= 0);
+  auto tcp_replies = run_script(c, script);
+  close(c);
+  stop = true;
+  th.join();
+  delete loop;
+
+  CHECK(serial_replies == tcp_replies);
+  for (size_t i = 0; i < expected.size(); i++) {
+    INFO("script line " << i + 1);
+    CHECK(serial_replies[i] == expected[i]);
+  }
+}

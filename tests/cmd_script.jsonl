@@ -1,0 +1,16 @@
+{"id":1,"do":"ping"}
+{"id":2,"do":"ver"}
+{"id":3,"do":"status"}
+{"id":4,"do":"cfg"}
+{"id":5,"do":"cfg","max_faces":3,"lm":false}
+{"id":6,"do":"cfg","max_faces":5,"fps_cap":99}
+{"id":7,"do":"cfg"}
+@crlf {"id":8,"do":"ping"}
+not json
+@long 600
+{"do":"ping"}
+{"id":9,"do":"fly"}
+{"id":10,"do":"ping","x":1}
+{"id":11,"do":"cfg","sub":false}
+{"id":12,"do":"ping"}
+{"id":13,"do":"cfg","det":true,"lm":true,"max_faces":10,"fps_cap":0,"sub":true}

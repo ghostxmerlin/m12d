@@ -61,6 +61,8 @@ set(M12CORE_SOURCES
   src/io/serial_port.cpp
   src/io/tcp_listener.cpp
   src/io/io_loop.cpp
+  src/proto/flat_json.cpp
+  src/proto/commands.cpp
 )
 add_library(m12core STATIC ${M12CORE_SOURCES})
 target_include_directories(m12core PUBLIC ${CMAKE_SOURCE_DIR}/src)
@@ -82,6 +84,8 @@ if(HOST)
     tests/test_det_json.cpp
     tests/test_line_splitter.cpp
     tests/test_io_loop.cpp
+    tests/test_flat_json.cpp
+    tests/test_commands.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
