@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "vision/face_tracker.h"
 #include "vision/retinaface.h"
 
 // One detection line, field-compatible with the stock face_detector output:
@@ -9,8 +10,14 @@
 // Coordinates are multiplied by scale (detector space -> 640x480). Box values have 1 decimal,
 // prob 3 decimals; marks are truncated to int before scaling, like stock. Keeps the max_faces
 // highest-prob faces, highest first. Emitted even with zero faces (stock emits nothing then).
+// Per-face extras appended after the stock fields: "id" (tracker), and once known
+// "gender" ("m" / "f" / "?"), "age", "age_group".
+struct FaceExtra {
+  int id = 0;
+  FaceAttr attr;
+};
 std::string det_json(uint64_t frame_id, const std::vector<FaceBox>& faces, float scale, size_t max_faces,
-                     bool with_lm = true);
+                     bool with_lm = true, const std::vector<FaceExtra>* extra = nullptr);
 
 // Heartbeat object body: {"t":..,"fps":..,"tier":..,"up":..,"mem":..,"frames":..,"reopens":..,"drop":..,"mhz":..}
 std::string hb_body(int temp_c, float fps, int tier, int64_t uptime_s, long mem_avail_kb, uint64_t frames,

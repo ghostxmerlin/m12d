@@ -20,7 +20,7 @@ struct D {
   bool sub = true;
   std::string h(const std::string& line, bool too_long = false) { return d.handle(line, too_long, sub); }
 };
-const char* kDefaultCfg = "\"cfg\":{\"det\":true,\"lm\":true,\"max_faces\":10,\"fps_cap\":0.0,\"sub\":true}";
+const char* kDefaultCfg = "\"cfg\":{\"det\":true,\"lm\":true,\"attr\":true,\"max_faces\":10,\"fps_cap\":0.0,\"sub\":true}";
 }  // namespace
 
 TEST_CASE("ping") {
@@ -47,17 +47,25 @@ TEST_CASE("cfg read") {
 TEST_CASE("cfg write") {
   D t;
   CHECK(t.h(R"({"id":5,"do":"cfg","max_faces":3,"lm":false,"fps_cap":4.5,"det":false})") ==
-        R"({"id":5,"ok":true,"cfg":{"det":false,"lm":false,"max_faces":3,"fps_cap":4.5,"sub":true}})");
+        R"({"id":5,"ok":true,"cfg":{"det":false,"lm":false,"attr":true,"max_faces":3,"fps_cap":4.5,"sub":true}})");
   CHECK(t.cfg.max_faces == 3);
   CHECK(t.cfg.with_lm == false);
   CHECK(t.cfg.det_on == false);
   CHECK(t.cfg.fps_cap == doctest::Approx(4.5));
 }
 
+TEST_CASE("cfg attr") {
+  D t;
+  CHECK(t.h(R"({"id":30,"do":"cfg","attr":false})") ==
+        R"({"id":30,"ok":true,"cfg":{"det":true,"lm":true,"attr":false,"max_faces":10,"fps_cap":0.0,"sub":true}})");
+  CHECK(t.cfg.attr_on == false);
+  CHECK(t.h(R"({"id":31,"do":"cfg","attr":1})") == R"({"id":31,"ok":false,"err":"badarg"})");
+}
+
 TEST_CASE("cfg sub") {
   D t;
   CHECK(t.h(R"({"id":6,"do":"cfg","sub":false})") ==
-        R"({"id":6,"ok":true,"cfg":{"det":true,"lm":true,"max_faces":10,"fps_cap":0.0,"sub":false}})");
+        R"({"id":6,"ok":true,"cfg":{"det":true,"lm":true,"attr":true,"max_faces":10,"fps_cap":0.0,"sub":false}})");
   CHECK(t.sub == false);
 }
 

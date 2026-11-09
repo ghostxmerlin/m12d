@@ -77,18 +77,18 @@ std::string Dispatcher::handle(std::string_view line, bool too_long, bool& sub) 
   }
 
   if (*cmd == "cfg") {
-    if (!only_keys(o, {"id", "do", "det", "lm", "max_faces", "fps_cap", "sub"})) return err(id, "badarg");
+    if (!only_keys(o, {"id", "do", "det", "lm", "attr", "max_faces", "fps_cap", "sub"})) return err(id, "badarg");
     // Validate everything first; apply only if all arguments are valid.
-    bool det = cfg_.det_on, lm = cfg_.with_lm, nsub = sub;
+    bool det = cfg_.det_on, lm = cfg_.with_lm, attr = cfg_.attr_on, nsub = sub;
     long long mf = cfg_.max_faces;
     float fc = cfg_.fps_cap;
     for (const auto& kv : o) {
       const std::string& k = kv.first;
       const FlatValue& v = kv.second;
-      if (k == "det" || k == "lm" || k == "sub") {
+      if (k == "det" || k == "lm" || k == "attr" || k == "sub") {
         const bool* b = std::get_if<bool>(&v);
         if (!b) return err(id, "badarg");
-        (k == "det" ? det : k == "lm" ? lm : nsub) = *b;
+        (k == "det" ? det : k == "lm" ? lm : k == "attr" ? attr : nsub) = *b;
       } else if (k == "max_faces") {
         if (!as_int(v, 1, 10, mf)) return err(id, "badarg");
       } else if (k == "fps_cap") {
@@ -100,12 +100,15 @@ std::string Dispatcher::handle(std::string_view line, bool too_long, bool& sub) 
     }
     cfg_.det_on = det;
     cfg_.with_lm = lm;
+    cfg_.attr_on = attr;
     cfg_.max_faces = static_cast<int>(mf);
     cfg_.fps_cap = fc;
     sub = nsub;
     char buf[160];
-    std::snprintf(buf, sizeof buf, ",\"cfg\":{\"det\":%s,\"lm\":%s,\"max_faces\":%lld,\"fps_cap\":%.1f,\"sub\":%s}}",
-                  det ? "true" : "false", lm ? "true" : "false", mf, fc, nsub ? "true" : "false");
+    std::snprintf(buf, sizeof buf,
+                  ",\"cfg\":{\"det\":%s,\"lm\":%s,\"attr\":%s,\"max_faces\":%lld,\"fps_cap\":%.1f,\"sub\":%s}}",
+                  det ? "true" : "false", lm ? "true" : "false", attr ? "true" : "false", mf, fc,
+                  nsub ? "true" : "false");
     return head + buf;
   }
 

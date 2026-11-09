@@ -33,6 +33,10 @@ TEST_CASE("defaults") {
   CHECK(o->cap_h == 240);
   CHECK(o->det_w == 192);
   CHECK(o->det_h == 144);
+  CHECK(o->use_attr);
+  auto n = parse({"--no-attr"}, err);
+  REQUIRE(n);
+  CHECK_FALSE(n->use_attr);
 }
 
 TEST_CASE("det size") {

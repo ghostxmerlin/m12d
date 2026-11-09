@@ -75,3 +75,33 @@ TEST_CASE("snap members") {
         "\"prob\":0.988}]");
   CHECK(snap_members(3, "/tmp/s", {}, 2.0f, 10) == "\"f\":3,\"path\":\"/tmp/s\",\"num\":0,\"face\":[]");
 }
+
+TEST_CASE("face extras: id and attributes appended after stock fields") {
+  std::vector<FaceBox> faces = {face(10, 20, 30, 40, 0.98765f), face(50, 20, 30, 40, 0.5f)};
+  std::vector<FaceExtra> extra(2);
+  extra[0].id = 3;
+  extra[0].attr.have = true;
+  extra[0].attr.gender = 1;
+  extra[0].attr.age = 45;
+  extra[1].id = 4;  // no attributes yet
+  std::string s = det_json(7, faces, 2.0f, 10, false, &extra);
+  CHECK(s ==
+        "{\"f\":7,\"num\":2,\"face\":["
+        "{\"x\":20.0,\"y\":40.0,\"w\":60.0,\"h\":80.0,\"prob\":0.988,\"id\":3,\"gender\":\"m\",\"age\":45,"
+        "\"age_group\":\"adult\"},"
+        "{\"x\":100.0,\"y\":40.0,\"w\":60.0,\"h\":80.0,\"prob\":0.500,\"id\":4}"
+        "],\"running\":\"Face Detector\"}");
+}
+
+TEST_CASE("face extras follow their face through the prob sort") {
+  std::vector<FaceBox> faces = {face(10, 20, 30, 40, 0.5f), face(50, 20, 30, 40, 0.9f)};
+  std::vector<FaceExtra> extra(2);
+  extra[0].id = 1;
+  extra[1].id = 2;
+  extra[1].attr.have = true;
+  extra[1].attr.gender = -1;
+  extra[1].attr.age = 8;
+  std::string s = det_json(1, faces, 1.0f, 10, false, &extra);
+  CHECK(s.find("\"prob\":0.900,\"id\":2,\"gender\":\"?\",\"age\":8,\"age_group\":\"child\"") != std::string::npos);
+  CHECK(s.find("\"prob\":0.500,\"id\":1}") != std::string::npos);
+}

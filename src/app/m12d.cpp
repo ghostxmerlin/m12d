@@ -27,6 +27,8 @@
 #include "sys/fileio.h"
 #include "sys/sysinfo.h"
 #include "sys/thermal.h"
+#include "vision/face_tracker.h"
+#include "vision/genderage.h"
 #include "vision/retinaface.h"
 
 #ifndef M12D_GIT
@@ -91,6 +93,13 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "m12d: cannot load model %s.{param,bin}\n", model.c_str());
     return 2;
   }
+  GenderAge ga;
+  const std::string ga_model = opt.models + "/genderage";
+  if (opt.use_attr && !ga.load(ga_model, opt.threads)) {
+    std::fprintf(stderr, "m12d: cannot load model %s.{param,bin} (use --no-attr to run without it)\n",
+                 ga_model.c_str());
+    return 2;
+  }
   int serial_fd = -1;
   if (opt.use_serial) {
     serial_fd = open_serial(opt.serial, 115200);
@@ -131,6 +140,7 @@ int main(int argc, char** argv) {
   src.version = kVersion;
   src.git = M12D_GIT;
   src.models = {"mnet.25-opt"};
+  if (opt.use_attr) src.models.push_back("genderage");
   Dispatcher disp(cfg, src);
   io = new IoLoop(serial_fd, listen_fd, 2, [&](ChanId c, std::string_view line, bool too_long) {
     bool sub = io->subscribed(c);
@@ -160,6 +170,8 @@ int main(int argc, char** argv) {
     const bool resize = opt.det_w != 320;
     const float to320 = 320.0f / opt.det_w;
     FpsMeter meter(2000);
+    FaceTracker tracker;
+    std::vector<uint8_t> ga_crop(96 * 96 * 3);
     Frame f;
     uint64_t last = 0;
     while (!g_stop) {
@@ -185,7 +197,23 @@ int main(int argc, char** argv) {
       } else {
         faces = rf.detect(rgb.data(), 320, 240);
       }
-      emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm));
+      // Gender / age group: at most one face per frame gets a 12 ms sample, on the
+      // tracker's schedule (3 samples for a new face, then a refresh every 5 s).
+      std::vector<FaceExtra> extra;
+      if (opt.use_attr) {
+        const int64_t t_ms = now_ms();
+        const std::vector<int> ids = tracker.update(faces, t_ms);
+        if (cfg.attr_on) {
+          const int k = tracker.pick_for_attr(ids, t_ms);
+          if (k >= 0) {
+            genderage_crop(rgb.data(), 320, 240, faces[k], ga_crop.data());
+            tracker.add_sample(ids[k], ga.infer(ga_crop.data()), t_ms);
+          }
+        }
+        extra.resize(faces.size());
+        for (size_t i = 0; i < faces.size(); i++) extra[i] = FaceExtra{ids[i], tracker.attr(ids[i])};
+      }
+      emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm, opt.use_attr ? &extra : nullptr));
       if (sh.det_frames++ == 0) first_det_ms = now_ms();
       meter.tick(now_ms());
       {

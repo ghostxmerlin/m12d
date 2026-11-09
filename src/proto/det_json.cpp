@@ -6,7 +6,7 @@
 #include <numeric>
 
 std::string det_json(uint64_t frame_id, const std::vector<FaceBox>& faces, float scale, size_t max_faces,
-                     bool with_lm) {
+                     bool with_lm, const std::vector<FaceExtra>* extra) {
   std::vector<size_t> order(faces.size());
   std::iota(order.begin(), order.end(), 0);
   std::stable_sort(order.begin(), order.end(), [&](size_t a, size_t b) { return faces[a].prob > faces[b].prob; });
@@ -33,6 +33,17 @@ std::string det_json(uint64_t frame_id, const std::vector<FaceBox>& faces, float
         s += buf;
       }
       s += "]";
+    }
+    if (extra && order[n] < extra->size()) {
+      const FaceExtra& e = (*extra)[order[n]];
+      std::snprintf(buf, sizeof buf, ",\"id\":%d", e.id);
+      s += buf;
+      if (e.attr.have) {
+        const char* g = e.attr.gender == 1 ? "m" : e.attr.gender == 0 ? "f" : "?";
+        std::snprintf(buf, sizeof buf, ",\"gender\":\"%s\",\"age\":%d,\"age_group\":\"%s\"", g, e.attr.age,
+                      age_group(e.attr.age));
+        s += buf;
+      }
     }
     s += "}";
   }
@@ -61,7 +72,7 @@ std::string hb_json(int temp_c, float fps, int tier, int64_t uptime_s, long mem_
 std::string snap_members(uint64_t frame_id, const std::string& path, const std::vector<FaceBox>& faces, float scale,
                          size_t max_faces, bool with_lm) {
   // Reuse det_json's face formatting: take its "num":..,"face":[...] span.
-  const std::string d = det_json(frame_id, faces, scale, max_faces, with_lm);
+  const std::string d = det_json(frame_id, faces, scale, max_faces, with_lm, nullptr);
   const size_t a = d.find("\"num\":");
   const size_t b = d.rfind(",\"running\":");
   return "\"f\":" + std::to_string(frame_id) + ",\"path\":\"" + path + "\"," + d.substr(a, b - a);

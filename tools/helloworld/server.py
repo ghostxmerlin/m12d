@@ -230,11 +230,11 @@ def request_allowed(headers, port):
 
 
 def allowed_command(cmd):
-    """The page only reads the config and toggles detection / landmarks."""
+    """The page only reads the config and toggles detection / landmarks / attributes."""
     if not isinstance(cmd, dict) or cmd.get("do") != "cfg":
         return False
     extra = set(cmd) - {"do"}
-    return extra <= {"det", "lm"} and all(isinstance(cmd[k], bool) for k in extra)
+    return extra <= {"det", "lm", "attr"} and all(isinstance(cmd[k], bool) for k in extra)
 
 
 def make_handler(hub, link, port):
