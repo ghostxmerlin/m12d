@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 """Unified command-set test for m12d over TCP or a serial port (stdlib only).
+Run with /usr/bin/python3: macOS Local Network privacy blocks Homebrew Python from
+reaching 10.254.239.1 ("No route to host"); Apple-signed binaries are allowed.
 
   cmdtest.py --tcp HOST:PORT | --serial DEV [--baud 115200]
              --script tests/cmd_script.jsonl --expect tests/cmd_expected.jsonl [--save out.jsonl]
