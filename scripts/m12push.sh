@@ -7,10 +7,13 @@ DIR=$(cd "$(dirname "$0")" && pwd)
 HOST=${M12_HOST:-10.254.239.1}
 USER_=${M12_USER:-m5stack}
 T=$(mktemp -d)
+# Device host key is pinned on first use (git-ignored); a changed key is refused.
+KH=$(cd "$(dirname "$0")/.." && pwd)/.superpowers/m12_known_hosts
+mkdir -p "$(dirname "$KH")"
 trap 'rm -rf "$T"' EXIT INT TERM
 printf '#!/bin/sh\necho "$M12_PASS"\n' > "$T/askpass"
 chmod 700 "$T/askpass"
 SSH_ASKPASS="$T/askpass" SSH_ASKPASS_REQUIRE=force DISPLAY=:0 \
-  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile="$T/kh" -o LogLevel=ERROR \
+  ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$KH" -o LogLevel=ERROR \
       -o PubkeyAuthentication=no -o ConnectTimeout=8 \
       "$USER_@$HOST" "cat > '$2'" < "$1"
