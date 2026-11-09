@@ -56,6 +56,7 @@ set(M12CORE_SOURCES
   src/camera/capture_loop.cpp
   src/camera/v4l2_camera.cpp
   src/vision/retinaface.cpp
+  src/proto/det_json.cpp
 )
 add_library(m12core STATIC ${M12CORE_SOURCES})
 target_include_directories(m12core PUBLIC ${CMAKE_SOURCE_DIR}/src)
@@ -74,6 +75,7 @@ if(HOST)
     tests/test_yuyv.cpp
     tests/test_capture_loop.cpp
     tests/test_retinaface.cpp
+    tests/test_det_json.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
