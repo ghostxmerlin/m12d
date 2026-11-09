@@ -52,6 +52,7 @@ endif()
 set(M12CORE_SOURCES
   src/core/latest_frame.cpp
   src/core/line_queue.cpp
+  src/core/fps_meter.cpp
   src/image/yuyv.cpp
   src/camera/capture_loop.cpp
   src/camera/v4l2_camera.cpp
@@ -93,6 +94,7 @@ if(HOST)
     tests/test_thermal.cpp
     tests/test_options.cpp
     tests/test_fileio.cpp
+    tests/test_fps_meter.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)

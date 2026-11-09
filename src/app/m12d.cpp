@@ -8,7 +8,6 @@
 #include <atomic>
 #include <chrono>
 #include <cstdio>
-#include <deque>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -17,6 +16,7 @@
 #include "app/options.h"
 #include "camera/capture_loop.h"
 #include "camera/v4l2_camera.h"
+#include "core/fps_meter.h"
 #include "core/latest_frame.h"
 #include "image/yuyv.h"
 #include "io/io_loop.h"
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
   std::atomic<int64_t> first_det_ms{0};
   std::thread det_th([&] {
     std::vector<uint8_t> rgb(320 * 240 * 3);
-    std::deque<int64_t> done;  // completion times within the last 2 s
+    FpsMeter meter(2000);
     Frame f;
     uint64_t last = 0;
     while (!g_stop) {
@@ -165,9 +165,7 @@ int main(int argc, char** argv) {
         continue;
       }
       last = f.id;
-      const int64_t t_now = now_ms();
-      while (!done.empty() && t_now - done.front() > 2000) done.pop_front();
-      sh.fps = done.size() / 2.0f;
+      sh.fps = meter.fps(now_ms());
       if (!cfg.det_on || sh.paused) continue;
       const auto t0 = Clock::now();
       // Detector input is always 320x240: convert 1:1, or 2x2-average a 640x480 frame.
@@ -178,7 +176,7 @@ int main(int argc, char** argv) {
       std::vector<FaceBox> faces = rf.detect(rgb.data(), 320, 240);
       emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm));
       if (sh.det_frames++ == 0) first_det_ms = now_ms();
-      done.push_back(now_ms());
+      meter.tick(now_ms());
       {
         std::lock_guard<std::mutex> lk(snap.mu);
         std::swap(snap.frame, f);
