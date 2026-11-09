@@ -1,4 +1,4 @@
-// m12bench <model_base> <w> <h> <iters>: time mnet.25 inference on a constant input.
+// m12bench <model_base> <w> <h> <iters>: time full mnet.25 inference (all 9 outputs) on a constant input.
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -15,6 +15,7 @@ int main(int argc, char** argv) {
   ncnn::Net net;
   net.opt.num_threads = 2;
   net.opt.lightmode = true;
+  net.opt.openmp_blocktime = 0;
   if (net.load_param((base + ".param").c_str()) != 0 || net.load_model((base + ".bin").c_str()) != 0) {
     std::fprintf(stderr, "m12bench: failed to load %s.{param,bin}\n", base.c_str());
     return 2;
@@ -25,10 +26,12 @@ int main(int argc, char** argv) {
     ncnn::Extractor ex = net.create_extractor();
     ex.input("data", in);
     ncnn::Mat out;
-    for (int s : {32, 16, 8}) {
-      std::string name = "face_rpn_cls_prob_reshape_stride" + std::to_string(s);
-      ex.extract(name.c_str(), out);
-    }
+    // All nine outputs, like the real detector (cls + bbox + landmark per stride).
+    for (int s : {32, 16, 8})
+      for (const char* kind : {"cls_prob_reshape", "bbox_pred", "landmark_pred"}) {
+        std::string name = std::string("face_rpn_") + kind + "_stride" + std::to_string(s);
+        ex.extract(name.c_str(), out);
+      }
   };
   for (int i = 0; i < 2; i++) run();
   double sum = 0, mn = 1e9;

@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstdlib>
+#include <tuple>
 #include <vector>
 #include "doctest.h"
 #include "image/yuyv.h"
@@ -56,6 +57,39 @@ TEST_CASE("output size") {
   auto img = solid(640, 480, 120, 128, 128);
   std::vector<uint8_t> rgb(320 * 240 * 3 + 16, 0xAB);
   yuyv_to_rgb_half(img.data(), 640, 480, rgb.data());
+  for (size_t i = 320 * 240 * 3; i < rgb.size(); i++) CHECK(rgb[i] == 0xAB);
+  CHECK(rgb[320 * 240 * 3 - 1] != 0xAB);
+}
+
+TEST_CASE("full-scale: white black red") {
+  for (auto [y, u, v, r, g, b, tol] : {std::tuple<int, int, int, int, int, int, int>{235, 128, 128, 255, 255, 255, 1},
+                                       {16, 128, 128, 0, 0, 0, 1},
+                                       {81, 90, 240, 255, 0, 0, 3}}) {
+    auto img = solid(4, 2, y, u, v);
+    std::vector<uint8_t> rgb(4 * 2 * 3);
+    yuyv_to_rgb(img.data(), 4, 2, rgb.data());
+    for (int p = 0; p < 8; p++) {
+      CHECK(near(rgb[p * 3 + 0], r, tol));
+      CHECK(near(rgb[p * 3 + 1], g, tol));
+      CHECK(near(rgb[p * 3 + 2], b, tol));
+    }
+  }
+}
+
+TEST_CASE("full-scale keeps each pixel's own luma") {
+  std::vector<uint8_t> img = {16, 128, 235, 128};  // one macropixel: Y0=16, Y1=235
+  std::vector<uint8_t> rgb(2 * 3);
+  yuyv_to_rgb(img.data(), 2, 1, rgb.data());
+  for (int c = 0; c < 3; c++) {
+    CHECK(near(rgb[c], 0, 1));
+    CHECK(near(rgb[3 + c], 255, 1));
+  }
+}
+
+TEST_CASE("full-scale output size") {
+  auto img = solid(320, 240, 120, 128, 128);
+  std::vector<uint8_t> rgb(320 * 240 * 3 + 16, 0xAB);
+  yuyv_to_rgb(img.data(), 320, 240, rgb.data());
   for (size_t i = 320 * 240 * 3; i < rgb.size(); i++) CHECK(rgb[i] == 0xAB);
   CHECK(rgb[320 * 240 * 3 - 1] != 0xAB);
 }

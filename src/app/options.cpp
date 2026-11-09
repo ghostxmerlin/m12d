@@ -46,6 +46,14 @@ std::optional<Options> parse_args(int argc, char** argv, std::string& err) {
     else if (a == "--tcp-port") ok = to_int(v, 0, 65535, o.tcp_port);
     else if (a == "--fps-cap") ok = to_float(v, 0, 30, o.fps_cap) && (o.fps_cap == 0 || o.fps_cap >= 0.5f);
     else if (a == "--cap-fps") ok = to_int(v, 1, 30, o.cap_fps);
+    else if (a == "--cap-size") {
+      const std::string sz = v;
+      ok = sz == "320x240" || sz == "640x480";
+      if (ok) {
+        o.cap_w = sz == "320x240" ? 320 : 640;
+        o.cap_h = sz == "320x240" ? 240 : 480;
+      }
+    }
     else if (a == "--max-faces") ok = to_int(v, 1, 10, o.max_faces);
     else if (a == "--threads") ok = to_int(v, 1, 4, o.threads);
     else if (a == "--hb-ms") ok = to_int(v, 100, 60000, o.hb_ms);

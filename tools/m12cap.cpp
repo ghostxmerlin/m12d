@@ -1,4 +1,5 @@
-// m12cap <n> <out> [fps] [--every k]: capture n YUYV 640x480 frames and report fps.
+// m12cap <n> <out> [fps] [--every k] [--size 320x240|640x480]: capture n YUYV frames
+// (default 640x480) and report fps.
 // Without --every, saves the last frame to <out>. With --every k, saves every k-th frame
 // to <out>_NN.yuyv (NN = 00, 01, ...).
 #include <atomic>
@@ -13,15 +14,20 @@
 
 int main(int argc, char** argv) {
   if (argc < 3) {
-    std::fprintf(stderr, "usage: m12cap <n> <out> [fps] [--every k]\n");
+    std::fprintf(stderr, "usage: m12cap <n> <out> [fps] [--every k] [--size 320x240|640x480]\n");
     return 1;
   }
   const int n = std::atoi(argv[1]);
   const char* out_path = argv[2];
-  int fps = 15, every = 0;
+  int fps = 15, every = 0, w = 640, h = 480;
   for (int i = 3; i < argc; i++) {
     if (std::strcmp(argv[i], "--every") == 0 && i + 1 < argc) {
       every = std::atoi(argv[++i]);
+    } else if (std::strcmp(argv[i], "--size") == 0 && i + 1 < argc) {
+      if (std::sscanf(argv[++i], "%dx%d", &w, &h) != 2) {
+        std::fprintf(stderr, "m12cap: bad --size\n");
+        return 1;
+      }
     } else {
       fps = std::atoi(argv[i]);
     }
@@ -34,7 +40,7 @@ int main(int argc, char** argv) {
     return ok;
   };
   int saved = 0;
-  V4L2Camera cam("/dev/video0", 640, 480, fps);
+  V4L2Camera cam("/dev/video0", w, h, fps);
   LatestFrame slot;
   std::atomic<bool> stop{false};
   CaptureStats st;

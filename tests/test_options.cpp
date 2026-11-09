@@ -25,10 +25,22 @@ TEST_CASE("defaults") {
   CHECK(o->tcp_port == 5555);
   CHECK(o->tcp_bind == "10.254.239.1");
   CHECK(o->fps_cap == 0);
-  CHECK(o->cap_fps == 15);
+  CHECK(o->cap_fps == 10);
   CHECK(o->max_faces == 10);
   CHECK(o->threads == 2);
   CHECK(o->hb_ms == 2000);
+  CHECK(o->cap_w == 320);
+  CHECK(o->cap_h == 240);
+}
+
+TEST_CASE("cap size") {
+  std::string err;
+  auto o = parse({"--cap-size", "640x480"}, err);
+  REQUIRE(o);
+  CHECK(o->cap_w == 640);
+  CHECK(o->cap_h == 480);
+  CHECK_FALSE(parse({"--cap-size", "800x600"}, err));
+  CHECK_FALSE(parse({"--cap-size", "320"}, err));
 }
 
 TEST_CASE("flags") {

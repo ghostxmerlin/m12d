@@ -1,5 +1,7 @@
 #include "image/yuyv.h"
 
+#include <cstddef>
+
 namespace {
 inline uint8_t clamp8(int v) { return v < 0 ? 0 : (v > 255 ? 255 : static_cast<uint8_t>(v)); }
 }  // namespace
@@ -27,6 +29,25 @@ void yuyv_to_rgb_half(const uint8_t* yuyv, int w, int h, uint8_t* rgb_out) {
       out[ox * 3 + 0] = clamp8((kY * yv + kRV * v + kRound) >> 20);
       out[ox * 3 + 1] = clamp8((kY * yv - kGU * u - kGV * v + kRound) >> 20);
       out[ox * 3 + 2] = clamp8((kY * yv + kBU * u + kRound) >> 20);
+    }
+  }
+}
+
+void yuyv_to_rgb(const uint8_t* yuyv, int w, int h, uint8_t* rgb_out) {
+  constexpr int kY = 1192, kRV = 1634, kGU = 401, kGV = 833, kBU = 2065;
+  constexpr int kRound = 1 << 19;
+  const std::size_t pairs = static_cast<size_t>(w) * h / 2;
+  for (std::size_t i = 0; i < pairs; i++) {
+    const uint8_t* m = yuyv + i * 4;
+    const int u = (m[1] - 128) * 1024;
+    const int v = (m[3] - 128) * 1024;
+    const int r = kRV * v, g = -kGU * u - kGV * v, b = kBU * u;
+    for (int k = 0; k < 2; k++) {
+      const int yv = kY * ((m[k * 2] - 16) * 1024);
+      uint8_t* o = rgb_out + (i * 2 + k) * 3;
+      o[0] = clamp8((yv + r + kRound) >> 20);
+      o[1] = clamp8((yv + g + kRound) >> 20);
+      o[2] = clamp8((yv + b + kRound) >> 20);
     }
   }
 }

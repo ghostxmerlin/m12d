@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Draw detection results onto a 640x480 YUYV frame and write a PNG (stdlib only).
+"""Draw detection results onto a YUYV frame (640x480 or 320x240) and write a PNG (stdlib only).
 
 usage: draw_boxes.py <in.yuyv> <out.png> <dets>[:color] [<dets>[:color] ...]
 <dets> is a file with "face x y w h prob lm.." lines, or JSON lines carrying a
 "face" list (m12d detection line or snap reply). Colors: green red blue yellow
-cyan magenta white. Coordinates are 640x480.
+cyan magenta white. Detection coordinates are always 640x480 (stock convention); on a
+320x240 frame they are scaled by 0.5.
 """
 import json
 import struct
 import sys
 import zlib
 
-W, H = 640, 480
+W, H = 640, 480  # set from the frame size in main()
 COLORS = {"green": (0, 220, 0), "red": (255, 40, 40), "blue": (60, 120, 255), "yellow": (255, 220, 0),
           "cyan": (0, 230, 230), "magenta": (255, 0, 255), "white": (255, 255, 255)}
 
@@ -50,8 +51,10 @@ def put(img, x, y, rgb):
         img[p:p + 3] = bytes(rgb)
 
 
-def draw(img, faces, rgb):
+def draw(img, faces, rgb, k=1.0):
     for x, y, w, h, marks in faces:
+        x, y, w, h = x * k, y * k, w * k, h * k
+        marks = [(mx * k, my * k) for mx, my in marks]
         for t in range(2):  # 2px thick rectangle
             for xx in range(int(x), int(x + w) + 1):
                 put(img, xx, y + t, rgb)
@@ -79,13 +82,16 @@ def write_png(path, img):
 def main():
     if len(sys.argv) < 4:
         sys.exit(__doc__)
+    global W, H
     data = open(sys.argv[1], "rb").read()
-    if len(data) != W * H * 2:
-        sys.exit(f"draw_boxes: {sys.argv[1]} is not 640x480 YUYV")
+    sizes = {640 * 480 * 2: (640, 480), 320 * 240 * 2: (320, 240)}
+    if len(data) not in sizes:
+        sys.exit(f"draw_boxes: {sys.argv[1]} is neither 640x480 nor 320x240 YUYV")
+    W, H = sizes[len(data)]
     img = yuyv_to_rgb(data)
     for spec in sys.argv[3:]:
         path, _, color = spec.partition(":")
-        draw(img, load_faces(path), COLORS.get(color or "green", COLORS["green"]))
+        draw(img, load_faces(path), COLORS.get(color or "green", COLORS["green"]), W / 640)
     write_png(sys.argv[2], img)
 
 

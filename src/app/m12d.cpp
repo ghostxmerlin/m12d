@@ -36,7 +36,7 @@
 namespace {
 constexpr const char* kVersion = "0.1.0";
 constexpr const char* kSnapPath = "/tmp/m12d_snap.yuyv";
-constexpr float kScale = 2.0f;  // detector runs at 320x240, output in 640x480
+constexpr float kScale = 2.0f;  // detector runs at 320x240; output coordinates are 640x480 (stock)
 
 std::atomic<bool> g_stop{false};
 void on_signal(int) { g_stop = true; }
@@ -73,10 +73,10 @@ int main(int argc, char** argv) {
   }
   const Options opt = *parsed;
   std::fprintf(stderr,
-               "m12d %s (%s) models=%s serial=%s tcp=%s:%d stdout=%d fps_cap=%.1f cap_fps=%d max_faces=%d "
+               "m12d %s (%s) models=%s serial=%s tcp=%s:%d stdout=%d fps_cap=%.1f cap=%dx%d@%d max_faces=%d "
                "threads=%d hb_ms=%d\n",
                kVersion, M12D_GIT, opt.models.c_str(), opt.use_serial ? opt.serial.c_str() : "off",
-               opt.tcp_bind.c_str(), opt.tcp_port, opt.use_stdout, opt.fps_cap, opt.cap_fps, opt.max_faces,
+               opt.tcp_bind.c_str(), opt.tcp_port, opt.use_stdout, opt.fps_cap, opt.cap_w, opt.cap_h, opt.cap_fps, opt.max_faces,
                opt.threads, opt.hb_ms);
 
   struct sigaction sa {};
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
   };
 
   LatestFrame slot;
-  V4L2Camera cam(opt.video, 640, 480, opt.cap_fps);
+  V4L2Camera cam(opt.video, opt.cap_w, opt.cap_h, opt.cap_fps);
   std::thread cap_th([&] { capture_loop(cam, slot, g_stop, cap_stats); });
   std::thread io_th([&] { io->run(g_stop); });
   std::atomic<int64_t> first_det_ms{0};
@@ -170,8 +170,12 @@ int main(int argc, char** argv) {
       sh.fps = done.size() / 2.0f;
       if (!cfg.det_on || sh.paused) continue;
       const auto t0 = Clock::now();
-      yuyv_to_rgb_half(f.yuyv.data(), f.w, f.h, rgb.data());
-      std::vector<FaceBox> faces = rf.detect(rgb.data(), f.w / 2, f.h / 2);
+      // Detector input is always 320x240: convert 1:1, or 2x2-average a 640x480 frame.
+      if (f.w == 320)
+        yuyv_to_rgb(f.yuyv.data(), f.w, f.h, rgb.data());
+      else
+        yuyv_to_rgb_half(f.yuyv.data(), f.w, f.h, rgb.data());
+      std::vector<FaceBox> faces = rf.detect(rgb.data(), 320, 240);
       emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm));
       if (sh.det_frames++ == 0) first_det_ms = now_ms();
       done.push_back(now_ms());

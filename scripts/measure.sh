@@ -19,7 +19,9 @@ cd /home/m5stack/m12d
 sh -c \"\$CMD\" > /dev/null 2> \$ERR < /dev/null &
 JOB=\$!
 sleep 2
-PID=\$(ps | awk '/\\.\\/bin\\/(m12d|face_detector)/ && !/awk/ {print \$1; exit}')
+# The target is the process whose command NAME is ./bin/m12d or ./bin/face_detector
+# (not a wrapper shell whose argument string merely contains it).
+PID=\$(ps | awk '\$3 ~ /^\\.\\/bin\\/(m12d|face_detector)\$/ {print \$1; exit}')
 cpu() { awk '/^cpu /{print \$2+\$3+\$4+\$7+\$8+\$9, \$5+\$6}' /proc/stat; }
 set -- \$(cpu); PB=\$1; PI=\$2
 echo 'time_s,temp_c,cpu_pct,alive,rss_kb'
@@ -35,8 +37,10 @@ while [ \$t -lt \$SECS ]; do
   if [ \$alive -eq 0 ]; then status=DIED; break; fi
 done
 [ -n \"\$PID\" ] && kill -TERM \$PID 2>/dev/null
-wait \$JOB; rc=\$?
+# The stock pipeline's 'sleep 999999' keeps the job alive; end it before waiting.
+sleep 1
 for p in \$(ps | awk '/sleep 999999/ && !/awk/ {print \$1}'); do kill \$p; done
+wait \$JOB; rc=\$?
 if grep -q '^total ' \$ERR; then
   fps=\$(awk '/^total /{s+=\$2;n++} END{if(n) printf \"%.2f\", 1000/(s/n)}' \$ERR)
 else
