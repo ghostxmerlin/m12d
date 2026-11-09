@@ -1,6 +1,8 @@
 // ref_stock_fd: host-only reference oracle for B-layer parity (Task 7).
+// Portions copyright M5Stack (UnitV2Framework), licensed under the Apache License 2.0
+// (http://www.apache.org/licenses/LICENSE-2.0). See THIRD_PARTY.md.
 //
-// The block marked BEGIN/END below (lines 12-340 of the original) are copied VERBATIM from UnitV2Framework main/face_detector.cpp
+// The block marked BEGIN/END below (lines 12-340 of the original) is copied VERBATIM from UnitV2Framework main/face_detector.cpp
 // at commit 0e48be6 (struct FaceObject .. detect_retinaface), extracted by line range,
 // not retyped. Only frame input and printing are new. Links host OpenCV (core+imgproc)
 // and host ncnn; never built for the device.

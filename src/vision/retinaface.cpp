@@ -1,3 +1,6 @@
+// Portions copyright M5Stack (UnitV2Framework), licensed under the Apache License 2.0
+// (http://www.apache.org/licenses/LICENSE-2.0). See THIRD_PARTY.md.
+// Changes: OpenCV types replaced by plain structs, omp sections removed, RGB input.
 // Post-processing ported from UnitV2Framework main/face_detector.cpp @0e48be6
 // (qsort_descent_inplace, nms_sorted_bboxes, generate_anchors, generate_proposals,
 // detect_retinaface). Arithmetic is kept identical; cv::Rect_<float> is replaced by
