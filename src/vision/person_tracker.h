@@ -28,6 +28,9 @@ class PersonTracker {
   bool needs_verify(int64_t now_ms) const;
   void apply_verify(const std::vector<PersonBox>& dets320, int64_t now_ms);
   std::vector<PersonTrack> confirmed() const;
+  // A face paired with a confirmed track is evidence it is a person: restart its recheck clock,
+  // so a person whose face is in view never costs a periodic 320 pass.
+  void face_seen(int id, int64_t now_ms);
   void clear();
 
  private:

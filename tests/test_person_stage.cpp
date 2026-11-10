@@ -83,3 +83,14 @@ TEST_CASE("pairing only uses faces that are output (max_faces)") {
   REQUIRE(b.size() == 1);
   CHECK(b[0].face_id == 6);
 }
+
+TEST_CASE("stage marks persons with a paired face as verified") {
+  std::vector<uint8_t> rgb;
+  if (!frame("stand25_00", rgb)) return;
+  PersonDetector det;
+  REQUIRE(det.load(kYoloS, 1));
+  PersonStage st(det);
+  const std::vector<FaceBox> faces = {FaceBox{158, 38, 12, 14, 0.9f, {}}};
+  for (int64_t ms = 0; ms <= 6000; ms += 330) st.step(rgb.data(), true, faces, {42}, ms);
+  CHECK_FALSE(st.verify_due(6000));
+}

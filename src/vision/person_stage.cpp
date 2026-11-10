@@ -21,6 +21,7 @@ std::vector<PersonOut> PersonStage::step(const uint8_t* rgb320, bool ran_person,
   for (size_t i = 0; i < tracks.size(); i++) {
     const int k = pair[i];
     out.push_back(PersonOut{tracks[i].id, tracks[i].box, k >= 0 && k < static_cast<int>(face_ids.size()) ? face_ids[k] : -1});
+    if (k >= 0) tracker_.face_seen(tracks[i].id, now_ms);
   }
   return out;
 }

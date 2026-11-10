@@ -160,3 +160,15 @@ TEST_CASE("unseen track: reported for 1 missed pass, forgotten after 4") {
   t.update({pb(100, 50)}, 800);
   CHECK(t.needs_verify(800));        // 4 misses: forgotten, new pending track
 }
+
+TEST_CASE("a paired face counts as verification: no periodic 320 recheck") {
+  PersonTracker t;
+  t.update({pb(100, 50)}, 0);
+  t.apply_verify({pb(100, 50)}, 0);
+  const int id = t.confirmed()[0].id;
+  for (int64_t ms = 1000; ms <= 6000; ms += 1000) {
+    t.update({pb(100, 50)}, ms);
+    t.face_seen(id, ms);
+    CHECK_FALSE(t.needs_verify(ms));
+  }
+}

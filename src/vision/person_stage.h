@@ -21,6 +21,7 @@ class PersonStage {
   std::vector<PersonOut> step(const uint8_t* rgb320, bool ran_person, const std::vector<FaceBox>& faces,
                               const std::vector<int>& face_ids, int64_t now_ms, size_t max_faces = SIZE_MAX);
   void reset() { tracker_.clear(); }
+  bool verify_due(int64_t now_ms) const { return tracker_.needs_verify(now_ms); }
 
  private:
   PersonDetector& det_;

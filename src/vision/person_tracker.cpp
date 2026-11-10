@@ -72,4 +72,9 @@ std::vector<PersonTrack> PersonTracker::confirmed() const {
   return out;
 }
 
+void PersonTracker::face_seen(int id, int64_t now_ms) {
+  for (Track& t : tracks_)
+    if (t.t.id == id && t.t.state == PersonTrack::kConfirmed) t.verified_ms = now_ms;
+}
+
 void PersonTracker::clear() { tracks_.clear(); }
