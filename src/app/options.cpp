@@ -39,6 +39,10 @@ std::optional<Options> parse_args(int argc, char** argv, std::string& err) {
       o.use_person = false;
       continue;
     }
+    if (a == "--no-faceid") {
+      o.use_faceid = false;
+      continue;
+    }
     if (a == "--stdout") {
       o.use_stdout = true;
       continue;
@@ -50,6 +54,7 @@ std::optional<Options> parse_args(int argc, char** argv, std::string& err) {
     const char* v = argv[++i];
     bool ok = true;
     if (a == "--models") o.models = v;
+    else if (a == "--data") o.data = v;
     else if (a == "--serial") o.serial = v;
     else if (a == "--tcp-bind") o.tcp_bind = v;
     else if (a == "--tcp-port") ok = to_int(v, 0, 65535, o.tcp_port);

@@ -28,6 +28,9 @@
 #include "sys/sysinfo.h"
 #include "sys/thermal.h"
 #include "vision/det_schedule.h"
+#include "vision/face_db.h"
+#include "vision/face_embed.h"
+#include "vision/face_id_worker.h"
 #include "vision/face_tracker.h"
 #include "vision/genderage.h"
 #include "vision/person_stage.h"
@@ -109,6 +112,22 @@ int main(int argc, char** argv) {
                  p_model.c_str());
     return 2;
   }
+  FaceEmbedder fe;
+  const std::string fe_model = opt.models + "/mobilefacenet";
+  if (opt.use_faceid && !fe.load(fe_model, opt.threads)) {
+    std::fprintf(stderr, "m12d: cannot load model %s.{param,bin} (use --no-faceid to run without it)\n",
+                 fe_model.c_str());
+    return 2;
+  }
+  const std::string db_path = opt.data + "/faces.bin";
+  FaceDb face_db;
+  if (opt.use_faceid) {
+    std::string note;
+    face_db = FaceDb::load(db_path, &note);
+    if (!note.empty()) std::fprintf(stderr, "m12d: %s\n", note.c_str());
+    std::fprintf(stderr, "m12d: face library %s: %zu names\n", db_path.c_str(), face_db.list().size());
+  }
+  FaceJobQueue face_jobs;
   int serial_fd = -1;
   if (opt.use_serial) {
     serial_fd = open_serial(opt.serial, 115200);
@@ -151,10 +170,14 @@ int main(int argc, char** argv) {
   src.models = {"mnet.25-opt"};
   if (opt.use_attr) src.models.push_back("genderage");
   if (opt.use_person) src.models.push_back("yolo-fastest");
+  if (opt.use_faceid) src.models.push_back("mobilefacenet");
+  src.faceid_enabled = opt.use_faceid;
+  src.face_job = [&](FaceJob j) { return face_jobs.push(std::move(j)); };
+  src.paused = [&] { return sh.paused.load(); };
   Dispatcher disp(cfg, src);
   io = new IoLoop(serial_fd, listen_fd, 2, [&](ChanId c, std::string_view line, bool too_long) {
     bool sub = io->subscribed(c);
-    std::string r = disp.handle(line, too_long, sub);
+    std::string r = disp.handle(line, too_long, sub, c);
     io->set_subscribed(c, sub);
     return r;
   });
@@ -186,15 +209,47 @@ int main(int argc, char** argv) {
     bool person_was_on = false;
     uint64_t loop_n = 0;
     int64_t last_face_ms = INT64_MIN / 2;
+    // Face ID (phase 2): jobs from the IO thread are worked between frames, one embed per frame.
+    FaceIdWorker face_worker(face_db, [&](const FaceDb& d) { return d.save(db_path); });
+    std::vector<int> last_face_ids;  // ids of the last frame that ran face detection
+    // Face ID runs at the START of an iteration on the previous face frame (its RGB is still in
+    // `rgb`), so a request does not also wait for this frame's face detection (~40 ms).
+    std::vector<FaceBox> prev_faces;
+    std::vector<int> prev_ids;
+    uint64_t prev_frame = 0;
+    bool prev_face_frame = false;
+    int64_t prev_ms = 0;
+    auto embed_fn = [&](const FaceBox& b) { return fe.embed(rgb.data(), 320, 240, b); };
+    auto send_replies = [&](const std::vector<JobReply>& rs) {
+      for (const JobReply& r : rs) io->reply(r.chan, r.line);
+      face_jobs.finished(rs.size());
+    };
     Frame f;
     uint64_t last = 0;
     while (!g_stop) {
       if (!slot.wait_newer(last, f, 1000)) {
+        if (opt.use_faceid) {
+          face_worker.enqueue(face_jobs.take_all());
+          send_replies(face_worker.expire(now_ms(), last_face_ids));
+        }
         continue;
       }
       last = f.id;
       sh.fps = meter.fps(now_ms());
-      if (!cfg.det_on || sh.paused) continue;
+      if (opt.use_faceid) face_worker.enqueue(face_jobs.take_all());
+      if (!cfg.det_on || sh.paused) {
+        // Standby / thermal pause: learn and who are refused by the dispatcher; forget and
+        // faces need no frame. No faces -> any older who / learn ends via noface / deadline.
+        if (opt.use_faceid) send_replies(face_worker.step({}, {}, f.id, now_ms(), cfg.id_th, embed_fn));
+        prev_face_frame = false;
+        continue;
+      }
+      if (opt.use_faceid) {
+        if (prev_face_frame)
+          send_replies(face_worker.step(prev_faces, prev_ids, prev_frame, prev_ms, cfg.id_th, embed_fn));
+        else
+          send_replies(face_worker.expire(now_ms(), last_face_ids));
+      }
       const auto t0 = Clock::now();
       // Detector input is always 320x240: convert 1:1, or 2x2-average a 640x480 frame.
       if (f.w == 320)
@@ -225,9 +280,23 @@ int main(int argc, char** argv) {
       const std::vector<int> ids = tracker.update(faces, t_ms);
       // Gender / age group: at most one face per frame gets a 12 ms sample, on the
       // tracker's schedule (3 samples for a new face, then a refresh every 5 s).
-      // Face ids are printed whenever persons are (person[].face refers to them), even with --no-attr.
+      // Face ID input for the next iteration: only frames where face detection ran (a
+      // person-only frame has no faces to look at).
+      if (opt.use_faceid) {
+        prev_face_frame = plan.face;
+        if (plan.face) {
+          prev_faces = faces;
+          prev_ids = ids;
+          prev_frame = f.id;
+          prev_ms = t_ms;
+          last_face_ids = ids;
+        }
+      }
+      // Face ids are printed whenever persons or face ID are on (person[].face and "name" refer
+      // to them), even with --no-attr.
+      const bool with_extra = opt.use_attr || person_on || opt.use_faceid;
       std::vector<FaceExtra> extra;
-      if (opt.use_attr || person_on) {
+      if (with_extra) {
         if (opt.use_attr && cfg.attr_on) {
           const int k = tracker.pick_for_attr(ids, t_ms);
           if (k >= 0) {
@@ -236,11 +305,12 @@ int main(int argc, char** argv) {
           }
         }
         extra.resize(faces.size());
-        for (size_t i = 0; i < faces.size(); i++) extra[i] = FaceExtra{ids[i], tracker.attr(ids[i])};
+        for (size_t i = 0; i < faces.size(); i++)
+          extra[i] = FaceExtra{ids[i], tracker.attr(ids[i]), opt.use_faceid ? face_worker.name_for(ids[i]) : std::string()};
       }
       std::vector<PersonOut> persons;
       if (person_on) persons = pstage.step(rgb.data(), plan.person, faces, ids, t_ms, static_cast<size_t>(cfg.max_faces));
-      emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm, (opt.use_attr || person_on) ? &extra : nullptr,
+      emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm, with_extra ? &extra : nullptr,
                     person_on ? &persons : nullptr));
       if (sh.det_frames++ == 0) first_det_ms = now_ms();
       meter.tick(now_ms());

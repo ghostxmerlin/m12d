@@ -133,3 +133,14 @@ TEST_CASE("at most 5 persons, highest prob first") {
   CHECK(s.find("\"prob\":0.650") == std::string::npos);
   CHECK(s.find("\"prob\":0.900") < s.find("\"prob\":0.850"));
 }
+
+TEST_CASE("name appended after id when set, absent when empty") {
+  std::vector<FaceBox> faces = {face(10, 20, 30, 40, 0.98765f)};
+  std::vector<FaceExtra> ex(1);
+  ex[0].id = 4;
+  ex[0].name = "a\"b";
+  std::string s = det_json(7, faces, 2.0f, 10, false, &ex);
+  CHECK(s.find(",\"id\":4,\"name\":\"a\\\"b\"}") != std::string::npos);
+  ex[0].name.clear();
+  CHECK(det_json(7, faces, 2.0f, 10, false, &ex).find("\"name\"") == std::string::npos);
+}

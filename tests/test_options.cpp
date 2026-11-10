@@ -37,6 +37,12 @@ TEST_CASE("defaults") {
   auto n = parse({"--no-attr"}, err);
   REQUIRE(n);
   CHECK_FALSE(n->use_attr);  CHECK(o->use_person);
+  CHECK(o->use_faceid);
+  CHECK(o->data == "data");
+  auto nf = parse({"--no-faceid", "--data", "/tmp/d"}, err);
+  REQUIRE(nf);
+  CHECK_FALSE(nf->use_faceid);
+  CHECK(nf->data == "/tmp/d");
   auto np = parse({"--no-person"}, err);
   REQUIRE(np);
   CHECK_FALSE(np->use_person);

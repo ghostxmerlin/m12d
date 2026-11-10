@@ -16,6 +16,7 @@
 struct FaceExtra {
   int id = 0;
   FaceAttr attr;
+  std::string name;  // face-ID write-back (phase 2): printed after "id" when not empty
 };
 // Persons (phase 1b): when persons != nullptr, ',"person":[...]' is appended after "running":
 // {"x","y","w","h","prob","id","face"} (face = paired face id or -1), at most kMaxPersons, by prob.

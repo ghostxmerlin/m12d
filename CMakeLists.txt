@@ -146,8 +146,7 @@ if(HOST)
   # phase 2 A-layer: stock arcface feature path (verbatim copy) and ours, on the same RGB input
   add_executable(ref_stock_arc tools/ref/ref_stock_arc.cpp)
   target_link_libraries(ref_stock_arc PRIVATE ncnn_lib)
-  add_executable(embed_file tools/embed_file.cpp)
-  target_link_libraries(embed_file PRIVATE m12core)
+
   # experiment: detection quality vs detector input size on the fixed frame set
   add_executable(attr_file tools/attr_file.cpp)
   target_link_libraries(attr_file PRIVATE m12core)
@@ -158,6 +157,9 @@ if(HOST)
 endif()
 # experiment (phase 1b): Yolo-Fastest person detection vs RetinaFace on captured frames (host + device timing)
 m12_exe(person_file tools/person_file.cpp)
+# phase 2: FaceEmbedder on a captured frame (A-layer parity on host, timing on the device)
+m12_exe(embed_file tools/embed_file.cpp)
+target_link_libraries(embed_file PRIVATE m12core)
 target_link_libraries(person_file PRIVATE m12core)
 
 # ---- m12d main program ----

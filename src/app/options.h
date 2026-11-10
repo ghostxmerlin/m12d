@@ -7,6 +7,8 @@ struct Options {
   bool use_serial = true, use_stdout = false;
   bool use_attr = true;  // gender / age-group sampling (models/genderage)
   bool use_person = true;  // person detection (models/yolo-fastest), phase 1b
+  bool use_faceid = true;  // on-demand face ID (models/mobilefacenet), phase 2
+  std::string data = "data";  // persistent data dir (face library data/faces.bin)
   int tcp_port = 5555;
   std::string tcp_bind = "10.254.239.1";  // USB-network address; never the WiFi STA LAN
   float fps_cap = 0;
@@ -18,6 +20,6 @@ struct Options {
   int hb_ms = 2000;
 };
 
-// --models DIR --serial PATH --no-serial --no-attr --no-person --tcp-port N --tcp-bind ADDR --stdout --fps-cap F
+// --models DIR --serial PATH --no-serial --no-attr --no-person --no-faceid --data DIR --tcp-port N --tcp-bind ADDR --stdout --fps-cap F
 // --cap-fps N --cap-size 320x240|640x480 --det-size WxH --max-faces N --threads N --hb-ms N
 std::optional<Options> parse_args(int argc, char** argv, std::string& err);

@@ -2,6 +2,7 @@
 // Detects the largest face (RetinaFace at 320x240), prints "lm x0 y0 .. x4 y4" (ints, truncated like
 // stock FaceInfo::landmark) and then the 128-d FaceEmbedder feature, one value per line.
 // --int-lm embeds with the truncated landmarks, so the input matches ref_stock_arc exactly.
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <vector>
@@ -47,6 +48,13 @@ int main(int argc, char** argv) {
     }
   }
   std::printf("\n");
-  for (float v : fe.embed(rgb.data(), 320, 240, f)) std::printf("%.6f\n", v);
+  Embedding e{};
+  for (int r = 0; r < 5; r++) {  // first run warms up; stderr gets each run's time
+    const auto t0 = std::chrono::steady_clock::now();
+    e = fe.embed(rgb.data(), 320, 240, f);
+    std::fprintf(stderr, "embed_ms %.1f\n",
+                 std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count());
+  }
+  for (float v : e) std::printf("%.6f\n", v);
   return 0;
 }

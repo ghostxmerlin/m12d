@@ -7,7 +7,7 @@ DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$DIR/.."
 BINS="m12d m12bench m12cap detect_file"
 scripts/env.sh sh -c "scripts/build.sh target >/dev/null && for b in $BINS; do scripts/check-binary.sh build/target/\$b; done"
-scripts/m12ssh.sh 'mkdir -p /home/m5stack/m12d/bin /home/m5stack/m12d/models /home/m5stack/m12d/log'
+scripts/m12ssh.sh 'mkdir -p /home/m5stack/m12d/bin /home/m5stack/m12d/models /home/m5stack/m12d/log /home/m5stack/m12d/data'
 for b in $BINS; do
   scripts/m12push.sh "build/target/$b" "/home/m5stack/m12d/bin/$b.new"
 done
@@ -19,5 +19,6 @@ scripts/m12ssh.sh "cd /home/m5stack/m12d/models && for f in genderage.param gend
 scripts/m12ssh.sh "cd /home/m5stack/m12d/bin && for b in $BINS; do chmod +x \$b.new && mv -f \$b.new \$b; done
 cd /home/m5stack/m12d/models && for f in mnet.25-opt.param mnet.25-opt.bin; do [ -f \$f ] || cp /home/m5stack/payload/models/\$f .; done
 for f in yolo-fastest.param yolo-fastest.bin; do [ -f \$f ] || cp /home/m5stack/payload/uploads/models/yolo_20class/\$f .; done
+for f in mobilefacenet.param mobilefacenet.bin; do [ -f \$f ] || cp /home/m5stack/payload/models/\$f .; done
 ls -l /home/m5stack/m12d/bin /home/m5stack/m12d/models"
 echo "deploy: OK"

@@ -1,5 +1,7 @@
 #include "proto/det_json.h"
 
+#include "proto/flat_json.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -38,6 +40,7 @@ std::string det_json(uint64_t frame_id, const std::vector<FaceBox>& faces, float
       const FaceExtra& e = (*extra)[order[n]];
       std::snprintf(buf, sizeof buf, ",\"id\":%d", e.id);
       s += buf;
+      if (!e.name.empty()) s += ",\"name\":" + json_str(e.name);
       if (e.attr.have) {
         const char* g = e.attr.gender == 1 ? "m" : e.attr.gender == 0 ? "f" : "?";
         std::snprintf(buf, sizeof buf, ",\"gender\":\"%s\",\"age\":%d,\"age_group\":\"%s\"", g, e.attr.age,
