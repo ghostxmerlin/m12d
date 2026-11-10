@@ -7,7 +7,7 @@
 
 // Runtime configuration: written by the dispatcher (IO thread), read by the detect thread.
 struct RuntimeCfg {
-  std::atomic<bool> det_on{true}, with_lm{true}, attr_on{true};
+  std::atomic<bool> det_on{true}, with_lm{true}, attr_on{true}, person_on{true};
   std::atomic<int> max_faces{10};
   std::atomic<float> fps_cap{0};
 };

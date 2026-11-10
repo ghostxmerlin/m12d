@@ -35,6 +35,10 @@ std::optional<Options> parse_args(int argc, char** argv, std::string& err) {
       o.use_attr = false;
       continue;
     }
+    if (a == "--no-person") {
+      o.use_person = false;
+      continue;
+    }
     if (a == "--stdout") {
       o.use_stdout = true;
       continue;

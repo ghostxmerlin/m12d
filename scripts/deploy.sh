@@ -1,6 +1,7 @@
 #!/bin/sh
 # Build device binaries, verify they are static ARM, push them to the M12 and make sure
-# the model is in /home/m5stack/m12d/models (copied from the stock payload, read-only use).
+# the models are in /home/m5stack/m12d/models (copied from the stock payload, read-only use):
+# mnet.25-opt (face) and yolo-fastest (person, stock yolo_20class).
 set -e
 DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$DIR/.."
@@ -17,5 +18,6 @@ done
 scripts/m12ssh.sh "cd /home/m5stack/m12d/models && for f in genderage.param genderage.bin; do mv -f \$f.new \$f; done"
 scripts/m12ssh.sh "cd /home/m5stack/m12d/bin && for b in $BINS; do chmod +x \$b.new && mv -f \$b.new \$b; done
 cd /home/m5stack/m12d/models && for f in mnet.25-opt.param mnet.25-opt.bin; do [ -f \$f ] || cp /home/m5stack/payload/models/\$f .; done
+for f in yolo-fastest.param yolo-fastest.bin; do [ -f \$f ] || cp /home/m5stack/payload/uploads/models/yolo_20class/\$f .; done
 ls -l /home/m5stack/m12d/bin /home/m5stack/m12d/models"
 echo "deploy: OK"

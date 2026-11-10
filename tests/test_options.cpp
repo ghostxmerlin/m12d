@@ -36,7 +36,10 @@ TEST_CASE("defaults") {
   CHECK(o->use_attr);
   auto n = parse({"--no-attr"}, err);
   REQUIRE(n);
-  CHECK_FALSE(n->use_attr);
+  CHECK_FALSE(n->use_attr);  CHECK(o->use_person);
+  auto np = parse({"--no-person"}, err);
+  REQUIRE(np);
+  CHECK_FALSE(np->use_person);
 }
 
 TEST_CASE("det size") {

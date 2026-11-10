@@ -1,5 +1,5 @@
-// m12d — resident face detector for the UnitV2 M12 (phase 1).
-// Threads: capture (V4L2 -> LatestFrame), detect (RetinaFace every frame -> push),
+// m12d — resident face + person detector for the UnitV2 M12 (phases 1, 1b).
+// Threads: capture (V4L2 -> LatestFrame), detect (RetinaFace / Yolo-Fastest per plan_frame -> push),
 // io (serial + TCP, unified command set). Main thread: thermal guard + heartbeat.
 #include <signal.h>
 #include <unistd.h>
@@ -27,8 +27,10 @@
 #include "sys/fileio.h"
 #include "sys/sysinfo.h"
 #include "sys/thermal.h"
+#include "vision/det_schedule.h"
 #include "vision/face_tracker.h"
 #include "vision/genderage.h"
+#include "vision/person_stage.h"
 #include "vision/retinaface.h"
 
 #ifndef M12D_GIT
@@ -100,6 +102,13 @@ int main(int argc, char** argv) {
                  ga_model.c_str());
     return 2;
   }
+  PersonDetector pdet;
+  const std::string p_model = opt.models + "/yolo-fastest";
+  if (opt.use_person && !pdet.load(p_model, opt.threads)) {
+    std::fprintf(stderr, "m12d: cannot load model %s.{param,bin} (use --no-person to run without it)\n",
+                 p_model.c_str());
+    return 2;
+  }
   int serial_fd = -1;
   if (opt.use_serial) {
     serial_fd = open_serial(opt.serial, 115200);
@@ -141,6 +150,7 @@ int main(int argc, char** argv) {
   src.git = M12D_GIT;
   src.models = {"mnet.25-opt"};
   if (opt.use_attr) src.models.push_back("genderage");
+  if (opt.use_person) src.models.push_back("yolo-fastest");
   Dispatcher disp(cfg, src);
   io = new IoLoop(serial_fd, listen_fd, 2, [&](ChanId c, std::string_view line, bool too_long) {
     bool sub = io->subscribed(c);
@@ -172,6 +182,10 @@ int main(int argc, char** argv) {
     FpsMeter meter(2000);
     FaceTracker tracker;
     std::vector<uint8_t> ga_crop(96 * 96 * 3);
+    PersonStage pstage(pdet);
+    bool person_was_on = false;
+    uint64_t loop_n = 0;
+    int64_t last_face_ms = INT64_MIN / 2;
     Frame f;
     uint64_t last = 0;
     while (!g_stop) {
@@ -187,22 +201,32 @@ int main(int argc, char** argv) {
         yuyv_to_rgb(f.yuyv.data(), f.w, f.h, rgb.data());
       else
         yuyv_to_rgb_half(f.yuyv.data(), f.w, f.h, rgb.data());
+      // Phase 1b schedule: with a face seen in the last 1 s, face every frame and person every
+      // 5th; otherwise the two alternate. Person detection off -> face every frame (phase 1).
+      const int64_t t_ms = now_ms();
+      const bool person_on = opt.use_person && cfg.person_on;
+      if (person_on != person_was_on) pstage.reset();
+      person_was_on = person_on;
+      const DetPlan plan = person_on ? plan_frame(loop_n++, t_ms - last_face_ms <= 1000) : DetPlan{true, false};
       std::vector<FaceBox> faces;
-      if (resize) {
-        // Near mode: detect on a smaller 4:3 image, then map back to 320x240 so the
-        // stock-compatible output path (x2 -> 640x480) is unchanged.
-        resize_rgb(rgb.data(), 320, 240, det_rgb.data(), opt.det_w, opt.det_h);
-        faces = rf.detect(det_rgb.data(), opt.det_w, opt.det_h);
-        scale_faces(faces, to320);
-      } else {
-        faces = rf.detect(rgb.data(), 320, 240);
+      if (plan.face) {
+        if (resize) {
+          // Near mode: detect on a smaller 4:3 image, then map back to 320x240 so the
+          // stock-compatible output path (x2 -> 640x480) is unchanged.
+          resize_rgb(rgb.data(), 320, 240, det_rgb.data(), opt.det_w, opt.det_h);
+          faces = rf.detect(det_rgb.data(), opt.det_w, opt.det_h);
+          scale_faces(faces, to320);
+        } else {
+          faces = rf.detect(rgb.data(), 320, 240);
+        }
+        if (!faces.empty()) last_face_ms = t_ms;
       }
+      // Face ids (tracker) are needed for attributes and for face-person pairing.
+      const std::vector<int> ids = tracker.update(faces, t_ms);
       // Gender / age group: at most one face per frame gets a 12 ms sample, on the
       // tracker's schedule (3 samples for a new face, then a refresh every 5 s).
       std::vector<FaceExtra> extra;
       if (opt.use_attr) {
-        const int64_t t_ms = now_ms();
-        const std::vector<int> ids = tracker.update(faces, t_ms);
         if (cfg.attr_on) {
           const int k = tracker.pick_for_attr(ids, t_ms);
           if (k >= 0) {
@@ -213,7 +237,10 @@ int main(int argc, char** argv) {
         extra.resize(faces.size());
         for (size_t i = 0; i < faces.size(); i++) extra[i] = FaceExtra{ids[i], tracker.attr(ids[i])};
       }
-      emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm, opt.use_attr ? &extra : nullptr));
+      std::vector<PersonOut> persons;
+      if (person_on) persons = pstage.step(rgb.data(), plan.person, faces, ids, t_ms);
+      emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm, opt.use_attr ? &extra : nullptr,
+                    person_on ? &persons : nullptr));
       if (sh.det_frames++ == 0) first_det_ms = now_ms();
       meter.tick(now_ms());
       {
