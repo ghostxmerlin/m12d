@@ -618,22 +618,25 @@
       li.append(a, del); list.append(li);
     }
   }
+  // Keep the button: e.currentTarget is null once the handler has awaited.
   $("fid-learn").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
     const name = $("fid-name").value.trim();
     if (!name) { fidMsg("先填一个名字。", true); $("fid-name").focus(); return; }
-    e.currentTarget.disabled = true;
+    btn.disabled = true;
     fidMsg("正在采样，请正对镜头别动……");
     const j = await call({ do: "learn", name });
-    e.currentTarget.disabled = false;
+    btn.disabled = false;
     fidMsg(j.ok ? `已学习「${j.name}」，库里共 ${j.samples} 个样本。` : fidError(j), !j.ok);
     if (j.ok) refreshFaces();
   });
   $("fid-who").addEventListener("click", async (e) => {
-    e.currentTarget.disabled = true;
+    const btn = e.currentTarget;
+    btn.disabled = true;
     const t0 = performance.now();
     const j = await call({ do: "who" });
     const ms = Math.round(performance.now() - t0);
-    e.currentTarget.disabled = false;
+    btn.disabled = false;
     if (!j.ok) { fidMsg(fidError(j), true); return; }
     fidMsg(j.name ? `是「${j.name}」（相似度 ${j.sim.toFixed(2)}，用时 ${ms} ms）。`
                   : `不认识（最高相似度 ${j.sim.toFixed(2)}，用时 ${ms} ms）。`);
