@@ -53,31 +53,14 @@ TEST_CASE("rejected track becomes confirmed on recheck") {
   CHECK(t.confirmed().size() == 1);
 }
 
-TEST_CASE("verify before recheck time leaves a rejected track rejected") {
+TEST_CASE("a 320 pass before the recheck time still confirms a rejected track it now sees") {
   PersonTracker t;
   t.update({pb(100, 50)}, 0);
   t.apply_verify({}, 0);
-  t.update({pb(300, 50)}, 1000);                         // a second, new person
-  t.update({pb(100, 50), pb(300, 50)}, 1000);
-  t.apply_verify({pb(100, 50), pb(300, 50)}, 1000);      // only the pending one may change
-  auto c = t.confirmed();
-  REQUIRE(c.size() == 1);
-  CHECK(c[0].box.x == doctest::Approx(300));
-}
-
-TEST_CASE("track forgotten after 1500 ms unseen") {
-  PersonTracker t;
-  t.update({pb(100, 50)}, 0);
-  t.apply_verify({pb(100, 50)}, 0);
-  int id = t.confirmed()[0].id;
-  t.update({}, 1500);
-  CHECK(t.confirmed().size() == 1);  // exactly 1500 ms: still kept
-  t.update({}, 1501);
-  CHECK(t.confirmed().empty());
-  t.update({pb(100, 50)}, 1600);
-  CHECK(t.needs_verify(1600));       // comes back as a new, pending track
-  t.apply_verify({pb(100, 50)}, 1600);
-  CHECK(t.confirmed()[0].id != id);
+  t.update({pb(100, 50), pb(300, 50)}, 1000);            // a second, new person -> 320 pass
+  CHECK(t.needs_verify(1000));
+  t.apply_verify({pb(100, 50), pb(300, 50)}, 1000);      // every track is re-verified
+  CHECK(t.confirmed().size() == 2);
 }
 
 TEST_CASE("ids stable across updates") {
@@ -102,4 +85,78 @@ TEST_CASE("clear drops all tracks") {
   t.clear();
   CHECK(t.confirmed().empty());
   CHECK_FALSE(t.needs_verify(0));
+}
+
+// ---- final-review fixes ----
+
+TEST_CASE("confirmed track is rechecked every 5 s and drops when 320 no longer sees it") {
+  PersonTracker t;
+  t.update({pb(100, 50)}, 0);
+  t.apply_verify({pb(100, 50)}, 0);
+  REQUIRE(t.confirmed().size() == 1);
+  for (int64_t ms = 1000; ms <= 4000; ms += 1000) {
+    t.update({pb(100, 50)}, ms);
+    CHECK_FALSE(t.needs_verify(ms));
+  }
+  t.update({pb(100, 50)}, 5000);
+  CHECK(t.needs_verify(5000));
+  t.apply_verify({}, 5000);  // the person left; only a coat is still matched by 160
+  CHECK(t.confirmed().empty());
+}
+
+TEST_CASE("any 320 pass re-verifies every track") {
+  PersonTracker t;
+  t.update({pb(100, 50)}, 0);
+  t.apply_verify({pb(100, 50)}, 0);        // confirmed (a person on the chair)
+  t.update({pb(100, 50), pb(250, 50)}, 300);  // someone new appears -> a 320 pass runs
+  t.apply_verify({pb(250, 50)}, 300);      // 320 sees only the newcomer
+  auto c = t.confirmed();
+  REQUIRE(c.size() == 1);
+  CHECK(c[0].box.x == doctest::Approx(250));
+}
+
+TEST_CASE("slow person passes keep the same track") {
+  PersonTracker t;
+  t.update({pb(100, 50)}, 0);
+  t.apply_verify({pb(100, 50)}, 0);
+  const int id = t.confirmed()[0].id;
+  t.update({pb(100, 50)}, 2000);  // e.g. fps_cap 2: passes 2 s apart
+  t.update({pb(100, 50)}, 4000);
+  CHECK_FALSE(t.needs_verify(4000));
+  REQUIRE(t.confirmed().size() == 1);
+  CHECK(t.confirmed()[0].id == id);
+}
+
+TEST_CASE("walking person keeps the id although IoU between passes is < 0.3") {
+  PersonTracker t;
+  t.update({pb(100, 50, 30, 100)}, 0);
+  t.apply_verify({pb(100, 50, 30, 100)}, 0);
+  const int id = t.confirmed()[0].id;
+  t.update({pb(121, 52, 30, 100)}, 330);  // moved 0.7 box widths: IoU ~0.17
+  CHECK_FALSE(t.needs_verify(330));
+  REQUIRE(t.confirmed().size() == 1);
+  CHECK(t.confirmed()[0].id == id);
+}
+
+TEST_CASE("a far-away box is a new track, not a jump") {
+  PersonTracker t;
+  t.update({pb(100, 50, 30, 100)}, 0);
+  t.apply_verify({pb(100, 50, 30, 100)}, 0);
+  t.update({pb(220, 50, 30, 100)}, 330);
+  CHECK(t.needs_verify(330));
+}
+
+TEST_CASE("unseen track: reported for 1 missed pass, forgotten after 4") {
+  PersonTracker t;
+  t.update({pb(100, 50)}, 0);
+  t.apply_verify({pb(100, 50)}, 0);
+  t.update({}, 100);
+  CHECK(t.confirmed().size() == 1);  // one 160 miss does not flicker
+  t.update({}, 200);
+  CHECK(t.confirmed().empty());      // two misses: not reported
+  t.update({pb(100, 50)}, 300);
+  CHECK(t.confirmed().size() == 1);  // came back within 4 passes: same confirmed track
+  t.update({}, 400); t.update({}, 500); t.update({}, 600); t.update({}, 700);
+  t.update({pb(100, 50)}, 800);
+  CHECK(t.needs_verify(800));        // 4 misses: forgotten, new pending track
 }
