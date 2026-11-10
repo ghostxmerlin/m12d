@@ -61,6 +61,7 @@ set(M12CORE_SOURCES
   src/vision/age_gender.cpp
   src/vision/genderage.cpp
   src/vision/face_tracker.cpp
+  src/vision/person_det.cpp
   src/proto/det_json.cpp
   src/io/line_splitter.cpp
   src/io/serial_port.cpp
@@ -102,6 +103,7 @@ if(HOST)
     tests/test_attributes.cpp
     tests/test_genderage.cpp
     tests/test_face_tracker.cpp
+    tests/test_person_det.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
