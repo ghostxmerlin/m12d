@@ -174,6 +174,25 @@
   button.toggle:disabled { opacity: 0.45; cursor: not-allowed; }
   button.toggle:focus-visible { outline: 3px solid var(--face); outline-offset: 2px; }
   .cmd-msg { font-size: 13px; color: var(--hot); min-height: 1.5em; margin: 6px 0 0; }
+  .fid-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .fid-row input {
+    font: inherit; font-size: 15px; padding: 7px 12px; border-radius: 999px;
+    border: 1.5px solid var(--rule); background: transparent; color: var(--ink); min-width: 0; flex: 1 1 8em;
+  }
+  .fid-row input:focus-visible { outline: 3px solid var(--face); outline-offset: 2px; }
+  button.act {
+    font: inherit; font-size: 15px; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--ink); background: var(--ink); color: var(--shell);
+  }
+  button.act:disabled { opacity: 0.4; cursor: default; }
+  button.act:focus-visible, button.del:focus-visible { outline: 3px solid var(--face); outline-offset: 2px; }
+  button.del {
+    font: inherit; font-size: 13px; padding: 2px 10px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--rule); background: transparent; color: var(--ink-soft);
+  }
+  button.del[data-armed="true"] { border-color: var(--hot); color: var(--hot); }
+  .fid-msg { font-size: 14px; min-height: 1.5em; margin: 8px 0 0; color: var(--ink); }
+  .fid-msg[data-bad="true"] { color: var(--hot); }
 
   h2 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
   footer { margin-top: 28px; font-size: 13px; color: var(--ink-soft); max-width: 72ch; }
@@ -223,6 +242,17 @@
       </div>
 
       <div>
+        <h2>人脸识别</h2>
+        <div class="fid-row">
+          <input id="fid-name" type="text" maxlength="32" placeholder="名字" aria-label="要学习的名字" autocomplete="off">
+          <button class="act" id="fid-learn" disabled>学习这张脸</button>
+          <button class="act" id="fid-who" disabled>这是谁</button>
+        </div>
+        <p class="fid-msg" id="fid-msg" role="status"></p>
+        <ul class="faces" id="fid-list"><li class="empty">人脸库是空的</li></ul>
+      </div>
+
+      <div>
         <h2>画面中的人形</h2>
         <ul class="faces" id="persons"><li class="empty">人形检测未开启</li></ul>
       </div>
@@ -260,6 +290,7 @@
     「检测」「五点」「年龄性别」「人形」会改设备上的配置；「镜像显示」只影响这个页面。
     人形（蓝框）用于 1.5 米以外：新出现的人形先复核一次再显示，脸落在人形上部时会配对。
     年龄性别按人估计：新面孔约 0.6 秒内给出，之后每 5 秒刷新；年龄只作年龄段参考。
+    人脸识别只在按下按钮时计算：学习取画面中最大的那张脸，约 1 秒内采 5 个样本，请保持面对镜头；认出后，名字会一直显示在框上，直到这个人离开画面。
   </footer>
 </div>
 
@@ -412,7 +443,7 @@
   }
   function faceLabel(f) {
     const a = f.gender ? `${GENDER[f.gender]} ${GROUP[f.age_group] || ""}` : "";
-    return `${(f.prob * 100).toFixed(1)}%${a ? "  " + a : ""}`;
+    return `${f.name ? f.name + "  " : ""}${(f.prob * 100).toFixed(1)}%${a ? "  " + a : ""}`;
   }
 
   function personLabel(p) {
@@ -436,7 +467,7 @@
         const li = document.createElement("li");
         const a = document.createElement("span");
         const who = attrText(f) || "年龄性别判断中";
-        a.textContent = `${f.id ? "#" + f.id + " " : ""}${who}　宽 ${Math.round(f.w)}`;
+        a.textContent = `${f.id ? "#" + f.id + " " : ""}${f.name ? f.name + "，" : ""}${who}　宽 ${Math.round(f.w)}`;
         const b = document.createElement("span"); b.textContent = (f.prob * 100).toFixed(1) + "%";
         li.append(a, b); list.append(li);
       });
@@ -482,8 +513,8 @@
     state.linkUp = l.up;
     $("link").dataset.up = String(l.up);
     $("link-msg").textContent = l.msg;
-    for (const id of ["t-det", "t-lm", "t-attr", "t-person"]) $(id).disabled = !l.cmds;
-    if (l.cmds) send({ do: "cfg" });
+    for (const id of ["t-det", "t-lm", "t-attr", "t-person", "fid-learn", "fid-who"]) $(id).disabled = !l.cmds;
+    if (l.cmds) { send({ do: "cfg" }); refreshFaces(); }
   }
 
   setInterval(() => {
@@ -525,6 +556,87 @@
   $("t-mirror").addEventListener("click", (e) => {
     state.mirror = !state.mirror;
     e.currentTarget.setAttribute("aria-pressed", String(state.mirror));
+  });
+
+  // ---------- face ID ----------
+  const FID_ERR = {
+    noface: "画面里没有可用的脸（或者人在采样时离开了），请正对镜头再试。",
+    conflict: "这张脸和库里的「%s」太像，没有学习。确认是同一个人的话，请用那个名字学习。",
+    full: "人脸库已满（最多 16 个名字），先删掉一个。",
+    standby: "检测处于待机，先打开「检测」。",
+    hot: "设备过热暂停中，等降温后再试。",
+    busy: "设备正忙，稍后再试。",
+    timeout: "设备 3 秒内没有完成。",
+    nomodel: "设备上没有加载识别模型。",
+    io: "人脸库写入失败。",
+    badarg: "名字无效（1–32 字节，不能有控制字符），或者这个名字不在库里。",
+  };
+  function fidMsg(text, bad) {
+    $("fid-msg").textContent = text;
+    $("fid-msg").dataset.bad = String(!!bad);
+  }
+  async function call(cmd) {
+    try {
+      const r = await fetch("/cmd", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cmd) });
+      return await r.json();
+    } catch (e) {
+      return { ok: false, err: "local" };
+    }
+  }
+  function fidError(j) {
+    if (j.err === "local") return "本机服务没有响应。";
+    return (FID_ERR[j.err] || `设备返回错误 ${j.err}`).replace("%s", j.name || "");
+  }
+  async function refreshFaces() {
+    const j = await call({ do: "faces" });
+    const list = $("fid-list");
+    list.replaceChildren();
+    if (!j.ok) {
+      const li = document.createElement("li"); li.className = "empty"; li.textContent = fidError(j); list.append(li);
+      return;
+    }
+    if (!j.faces.length) {
+      const li = document.createElement("li"); li.className = "empty"; li.textContent = "人脸库是空的"; list.append(li);
+      return;
+    }
+    for (const p of j.faces) {
+      const li = document.createElement("li");
+      const a = document.createElement("span"); a.textContent = `${p.name}　${p.samples} 个样本`;
+      const del = document.createElement("button");
+      del.className = "del"; del.textContent = "删除"; del.dataset.armed = "false";
+      del.setAttribute("aria-label", `删除 ${p.name}`);
+      del.addEventListener("click", async () => {
+        if (del.dataset.armed !== "true") {   // two-step delete, no browser dialog
+          del.dataset.armed = "true"; del.textContent = "再点一次确认";
+          setTimeout(() => { del.dataset.armed = "false"; del.textContent = "删除"; }, 3000);
+          return;
+        }
+        const r = await call({ do: "forget", name: p.name });
+        fidMsg(r.ok ? `已删除「${p.name}」。` : fidError(r), !r.ok);
+        refreshFaces();
+      });
+      li.append(a, del); list.append(li);
+    }
+  }
+  $("fid-learn").addEventListener("click", async (e) => {
+    const name = $("fid-name").value.trim();
+    if (!name) { fidMsg("先填一个名字。", true); $("fid-name").focus(); return; }
+    e.currentTarget.disabled = true;
+    fidMsg("正在采样，请正对镜头别动……");
+    const j = await call({ do: "learn", name });
+    e.currentTarget.disabled = false;
+    fidMsg(j.ok ? `已学习「${j.name}」，库里共 ${j.samples} 个样本。` : fidError(j), !j.ok);
+    if (j.ok) refreshFaces();
+  });
+  $("fid-who").addEventListener("click", async (e) => {
+    e.currentTarget.disabled = true;
+    const t0 = performance.now();
+    const j = await call({ do: "who" });
+    const ms = Math.round(performance.now() - t0);
+    e.currentTarget.disabled = false;
+    if (!j.ok) { fidMsg(fidError(j), true); return; }
+    fidMsg(j.name ? `是「${j.name}」（相似度 ${j.sim.toFixed(2)}，用时 ${ms} ms）。`
+                  : `不认识（最高相似度 ${j.sim.toFixed(2)}，用时 ${ms} ms）。`);
   });
 
   // ---------- stream ----------

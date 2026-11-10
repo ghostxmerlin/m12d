@@ -106,3 +106,19 @@ class RequestGuard(unittest.TestCase):
         self.assertFalse(allowed_command({"do": "snap"}))
         self.assertFalse(allowed_command({"do": "ping", "x": 1}))
         self.assertFalse(allowed_command([]))
+
+    def test_face_id_commands_allowed(self):
+        from server import allowed_command, request_timeout
+        self.assertTrue(allowed_command({"do": "learn", "name": "小明"}))
+        self.assertTrue(allowed_command({"do": "who"}))
+        self.assertTrue(allowed_command({"do": "who", "face": 3}))
+        self.assertTrue(allowed_command({"do": "forget", "name": "小明"}))
+        self.assertTrue(allowed_command({"do": "faces"}))
+        self.assertFalse(allowed_command({"do": "learn"}))
+        self.assertFalse(allowed_command({"do": "learn", "name": 5}))
+        self.assertFalse(allowed_command({"do": "learn", "name": "x" * 40}))
+        self.assertFalse(allowed_command({"do": "who", "face": "1"}))
+        self.assertFalse(allowed_command({"do": "who", "face": True}))
+        self.assertFalse(allowed_command({"do": "faces", "x": 1}))
+        self.assertGreaterEqual(request_timeout({"do": "learn", "name": "a"}), 4.0)  # device deadline is 3 s
+        self.assertEqual(request_timeout({"do": "cfg"}), 3.0)

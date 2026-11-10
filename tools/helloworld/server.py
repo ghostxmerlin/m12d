@@ -230,11 +230,27 @@ def request_allowed(headers, port):
 
 
 def allowed_command(cmd):
-    """The page only reads the config and toggles detection / landmarks / attributes / persons."""
-    if not isinstance(cmd, dict) or cmd.get("do") != "cfg":
+    """The page reads the config, toggles detection / landmarks / attributes / persons, and uses
+    the face-ID commands (learn / who / forget / faces) with well-formed arguments."""
+    if not isinstance(cmd, dict):
         return False
-    extra = set(cmd) - {"do"}
-    return extra <= {"det", "lm", "attr", "person"} and all(isinstance(cmd[k], bool) for k in extra)
+    do, extra = cmd.get("do"), set(cmd) - {"do"}
+    if do == "cfg":
+        return extra <= {"det", "lm", "attr", "person"} and all(isinstance(cmd[k], bool) for k in extra)
+    name_ok = isinstance(cmd.get("name"), str) and 0 < len(cmd["name"].encode()) <= 32
+    face_ok = "face" not in cmd or (type(cmd["face"]) is int and cmd["face"] > 0)
+    if do in ("learn", "forget"):
+        return name_ok and face_ok and extra <= ({"name", "face"} if do == "learn" else {"name"})
+    if do == "who":
+        return face_ok and extra <= {"face"}
+    if do == "faces":
+        return not extra
+    return False
+
+
+def request_timeout(cmd):
+    """learn may take the device's full 3 s deadline; wait a little longer than that."""
+    return 4.5 if cmd.get("do") in ("learn", "who") else 3.0
 
 
 def make_handler(hub, link, port):
@@ -298,7 +314,7 @@ def make_handler(hub, link, port):
             if not allowed_command(cmd):
                 self._send(403, "application/json", b'{"ok":false,"err":"notallowed"}')
                 return
-            reply = link.request(cmd)
+            reply = link.request(cmd, timeout=request_timeout(cmd))
             if reply is None:
                 self._send(504, "application/json", b'{"ok":false,"err":"timeout"}')
             else:
