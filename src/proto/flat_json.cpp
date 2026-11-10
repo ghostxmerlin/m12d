@@ -1,5 +1,7 @@
 #include "proto/flat_json.h"
 
+#include <cstdio>
+
 #include <cstdlib>
 
 namespace {
@@ -172,3 +174,20 @@ class Parser {
 }  // namespace
 
 std::optional<std::map<std::string, FlatValue>> parse_flat_json(std::string_view s) { return Parser(s).object(); }
+
+std::string json_str(const std::string& s) {
+  std::string o = "\"";
+  for (unsigned char c : s) {
+    if (c == '"' || c == '\\') {
+      o += '\\';
+      o += static_cast<char>(c);
+    } else if (c < 0x20) {
+      char b[8];
+      std::snprintf(b, sizeof b, "\\u%04x", c);
+      o += b;
+    } else {
+      o += static_cast<char>(c);
+    }
+  }
+  return o + "\"";
+}

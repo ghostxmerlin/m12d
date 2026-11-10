@@ -69,6 +69,7 @@ set(M12CORE_SOURCES
   src/vision/face_embed.cpp
   src/vision/stock_align.cpp
   src/vision/face_db.cpp
+  src/vision/face_id_worker.cpp
   src/proto/det_json.cpp
   src/io/line_splitter.cpp
   src/io/serial_port.cpp
@@ -117,6 +118,7 @@ if(HOST)
     tests/test_person_stage.cpp
     tests/test_face_embed.cpp
     tests/test_face_db.cpp
+    tests/test_face_id_worker.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)

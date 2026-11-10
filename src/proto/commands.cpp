@@ -11,23 +11,6 @@ std::string err(long long id, const char* code) {
   return "{\"id\":" + std::to_string(id) + ",\"ok\":false,\"err\":\"" + code + "\"}";
 }
 
-std::string json_str(const std::string& s) {
-  std::string o = "\"";
-  for (unsigned char c : s) {
-    if (c == '"' || c == '\\') {
-      o += '\\';
-      o += static_cast<char>(c);
-    } else if (c < 0x20) {
-      char b[8];
-      std::snprintf(b, sizeof b, "\\u%04x", c);
-      o += b;
-    } else {
-      o += static_cast<char>(c);
-    }
-  }
-  return o + "\"";
-}
-
 bool only_keys(const std::map<std::string, FlatValue>& o, std::initializer_list<const char*> allowed) {
   for (const auto& kv : o) {
     bool ok = false;

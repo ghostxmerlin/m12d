@@ -11,3 +11,6 @@
 // duplicate keys, malformed JSON, or trailing non-whitespace.
 using FlatValue = std::variant<std::nullptr_t, bool, double, std::string>;
 std::optional<std::map<std::string, FlatValue>> parse_flat_json(std::string_view s);
+
+// JSON string literal (with quotes) for s: escapes " and \\, control chars as \\u00XX.
+std::string json_str(const std::string& s);
