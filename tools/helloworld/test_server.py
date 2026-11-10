@@ -99,6 +99,8 @@ class RequestGuard(unittest.TestCase):
         self.assertTrue(allowed_command({"do": "cfg", "lm": True, "det": True}))
         self.assertTrue(allowed_command({"do": "cfg", "attr": False}))
         self.assertFalse(allowed_command({"do": "cfg", "attr": 0}))
+        self.assertTrue(allowed_command({"do": "cfg", "person": True}))
+        self.assertFalse(allowed_command({"do": "cfg", "person": "x"}))
         self.assertFalse(allowed_command({"do": "cfg", "max_faces": 1}))
         self.assertFalse(allowed_command({"do": "cfg", "det": "no"}))
         self.assertFalse(allowed_command({"do": "snap"}))

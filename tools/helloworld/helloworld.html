@@ -17,6 +17,7 @@
     --grid: #2B3740;
     --face: #FFC53D;
     --mark: #FF6F59;
+    --person: #5CC8FF;     /* person boxes (phase 1b), on the dark view */
     --ok: #2BA58A;
     --warn: #E59A1F;
     --hot: #D8452F;
@@ -222,6 +223,11 @@
       </div>
 
       <div>
+        <h2>画面中的人形</h2>
+        <ul class="faces" id="persons"><li class="empty">人形检测未开启</li></ul>
+      </div>
+
+      <div>
         <div class="spark-label"><span>最近 3 分钟</span><span><span style="color:var(--face)">■</span> 帧率　<span style="color:var(--mark)">■</span> 温度</span></div>
         <canvas class="spark" id="spark" width="600" height="112" aria-label="帧率与温度曲线"></canvas>
       </div>
@@ -241,6 +247,7 @@
           <button class="toggle" id="t-det" aria-pressed="true" disabled>检测</button>
           <button class="toggle" id="t-lm" aria-pressed="true" disabled>五点</button>
           <button class="toggle" id="t-attr" aria-pressed="true" disabled>年龄性别</button>
+          <button class="toggle" id="t-person" aria-pressed="true" disabled>人形</button>
           <button class="toggle" id="t-mirror" aria-pressed="false">镜像显示</button>
         </div>
         <p class="cmd-msg" id="cmd-msg" role="alert"></p>
@@ -249,8 +256,9 @@
   </main>
 
   <footer>
-    数据来自 m12d 的统一指令集。现在经 USB 网络读取，以后接上串口时，用同一套协议、不改页面。
-    「检测」「五点」「年龄性别」会改设备上的配置；「镜像显示」只影响这个页面。
+    数据来自 m12d 的统一指令集，经 USB 网络或串口读取，两者协议相同。
+    「检测」「五点」「年龄性别」「人形」会改设备上的配置；「镜像显示」只影响这个页面。
+    人形（蓝框）用于 1.5 米以外：新出现的人形先复核一次再显示，脸落在人形上部时会配对。
     年龄性别按人估计：新面孔约 0.6 秒内给出，之后每 5 秒刷新；年龄只作年龄段参考。
   </footer>
 </div>
@@ -310,6 +318,7 @@
     const css = getComputedStyle(document.documentElement);
     const faceColor = css.getPropertyValue("--face").trim();
     const markColor = css.getPropertyValue("--mark").trim();
+    const personColor = css.getPropertyValue("--person").trim();
 
     // Motion trail: earlier frames as fading outlines.
     const recent = state.frames.filter((fr) => now - fr.t < TRAIL_MS);
@@ -324,6 +333,20 @@
 
     const cur = state.frames[state.frames.length - 1];
     if (cur && now - cur.t < 1500) {
+      for (const p of cur.persons || []) {
+        ctx.strokeStyle = personColor;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+        ctx.setLineDash([]);
+        ctx.save();
+        const lx = state.mirror ? W - (p.x + p.w) : p.x;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = personColor;
+        ctx.font = "600 14px " + css.getPropertyValue("--font");
+        ctx.fillText(personLabel(p), lx + 4, Math.min(H - 6, p.y + p.h - 6));
+        ctx.restore();
+      }
       for (const f of cur.faces) {
         ctx.strokeStyle = faceColor;
         ctx.lineWidth = 3;
@@ -392,10 +415,14 @@
     return `${(f.prob * 100).toFixed(1)}%${a ? "  " + a : ""}`;
   }
 
+  function personLabel(p) {
+    return `人 #${p.id}${p.face >= 0 ? " · 脸 #" + p.face : ""}  ${(p.prob * 100).toFixed(0)}%`;
+  }
+
   // ---------- data ----------
   function onDet(o) {
     const now = performance.now();
-    state.frames.push({ t: now, f: o.f, faces: o.face || [] });
+    state.frames.push({ t: now, f: o.f, faces: o.face || [], persons: o.person });
     if (state.frames.length > 40) state.frames.shift();
     state.lastDetAt = now;
     state.lineTimes.push(now);
@@ -414,6 +441,20 @@
         li.append(a, b); list.append(li);
       });
     }
+    const plist = $("persons");
+    plist.replaceChildren();
+    const item = (text, prob) => {
+      const li = document.createElement("li");
+      const a = document.createElement("span"); a.textContent = text;
+      li.append(a);
+      if (prob !== undefined) { const b = document.createElement("span"); b.textContent = prob; li.append(b); }
+      if (prob === undefined) li.className = "empty";
+      plist.append(li);
+    };
+    if (!o.person) item("人形检测未开启");
+    else if (!o.person.length) item("没有人");
+    else o.person.forEach((p) => item(`#${p.id}${p.face >= 0 ? "，配对脸 #" + p.face : "，未配对"}　高 ${Math.round(p.h)}`,
+                                      (p.prob * 100).toFixed(1) + "%"));
   }
 
   function fmtUp(s) {
@@ -441,7 +482,7 @@
     state.linkUp = l.up;
     $("link").dataset.up = String(l.up);
     $("link-msg").textContent = l.msg;
-    for (const id of ["t-det", "t-lm", "t-attr"]) $(id).disabled = !l.cmds;
+    for (const id of ["t-det", "t-lm", "t-attr", "t-person"]) $(id).disabled = !l.cmds;
     if (l.cmds) send({ do: "cfg" });
   }
 
@@ -457,6 +498,7 @@
     $("t-det").setAttribute("aria-pressed", String(cfg.det));
     $("t-lm").setAttribute("aria-pressed", String(cfg.lm));
     if (cfg.attr !== undefined) $("t-attr").setAttribute("aria-pressed", String(cfg.attr));
+    if (cfg.person !== undefined) $("t-person").setAttribute("aria-pressed", String(cfg.person));
   }
 
   async function send(cmd) {
@@ -479,6 +521,7 @@
   $("t-det").addEventListener("click", (e) => send({ do: "cfg", det: e.currentTarget.getAttribute("aria-pressed") !== "true" }));
   $("t-lm").addEventListener("click", (e) => send({ do: "cfg", lm: e.currentTarget.getAttribute("aria-pressed") !== "true" }));
   $("t-attr").addEventListener("click", (e) => send({ do: "cfg", attr: e.currentTarget.getAttribute("aria-pressed") !== "true" }));
+  $("t-person").addEventListener("click", (e) => send({ do: "cfg", person: e.currentTarget.getAttribute("aria-pressed") !== "true" }));
   $("t-mirror").addEventListener("click", (e) => {
     state.mirror = !state.mirror;
     e.currentTarget.setAttribute("aria-pressed", String(state.mirror));
