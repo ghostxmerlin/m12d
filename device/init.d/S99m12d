@@ -13,6 +13,8 @@ case "$1" in
   start)
     [ -f "$FLAG" ] || exit 0
     cd "$APP" || exit 0
+    # Runs as root in the m5stack-owned app dir: never follow a symlink planted at a log path.
+    for f in log "$LOG" "$LOG.1"; do [ -L "$f" ] && rm -f "$f"; done
     mkdir -p log data
     # keep one previous log; 1 MB cap
     if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ]; then mv -f "$LOG" "$LOG.1"; fi
