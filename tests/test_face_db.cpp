@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <cmath>
 #include <cstdio>
@@ -167,5 +168,28 @@ TEST_CASE("load corrupt file renames it to .bad and starts empty") {
   REQUIRE(got.save(p));
   CHECK(FaceDb::load(p, &note).list().size() == 1);
   for (auto& f : ls(d)) std::remove((d + "/" + f).c_str());
+  rmdir(d.c_str());
+}
+
+TEST_CASE("an unreadable library is not treated as missing: it is quarantined, never overwritten") {
+  // A path that exists but cannot be read as a file (here a directory, so it also fails for
+  // root; in the field: permissions or EIO) must not be taken for "no library yet".
+  const std::string d = tmpdir(), p = d + "/faces.bin";
+  REQUIRE(mkdir(p.c_str(), 0700) == 0);
+  std::string note;
+  FaceDb got = FaceDb::load(p, &note);
+  CHECK(got.list().empty());
+  CHECK_FALSE(note.empty());
+  struct stat st;
+  CHECK(stat(p.c_str(), &st) != 0);  // moved away: the next save cannot overwrite it
+  bool kept = false;
+  for (auto& f : ls(d)) kept = kept || f.rfind("faces.bin.bad.", 0) == 0;
+  CHECK(kept);
+  REQUIRE(got.add("bob", five(10), 0.5f, nullptr) == AddResult::kOk);
+  CHECK(got.save(p));
+  for (auto& f : ls(d)) {
+    const std::string q = d + "/" + f;
+    if (rmdir(q.c_str()) != 0) std::remove(q.c_str());
+  }
   rmdir(d.c_str());
 }

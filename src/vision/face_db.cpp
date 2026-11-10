@@ -4,8 +4,11 @@
 #include <cstdint>
 #include <cstring>
 #include <ctime>
-#include <fstream>
-#include <iterator>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <cerrno>
 
 #include "sys/fileio.h"
 
@@ -152,13 +155,42 @@ bool FaceDb::save(const std::string& path) const {
 
 FaceDb FaceDb::load(const std::string& path, std::string* note) {
   if (note) note->clear();
-  std::ifstream f(path, std::ios::binary);
-  if (!f) return FaceDb();
-  const std::string bytes((std::istreambuf_iterator<char>(f)), {});
-  f.close();
-  if (auto db = parse(bytes)) return *db;
+  // Only "no such file" means "no library yet". Anything else -- not a regular file, no
+  // permission, a read error, bad contents -- is quarantined, so a later save cannot
+  // overwrite a library that may still be recoverable.
+  std::string why;
+  std::string bytes;
+  const int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC);
+  if (fd < 0) {
+    if (errno == ENOENT) return FaceDb();
+    why = std::string("cannot open (") + std::strerror(errno) + ")";
+  } else {
+    struct stat st;
+    if (::fstat(fd, &st) != 0 || !S_ISREG(st.st_mode)) {
+      why = "not a regular file";
+    } else {
+      char buf[4096];
+      for (;;) {
+        const ssize_t n = ::read(fd, buf, sizeof buf);
+        if (n < 0) {
+          if (errno == EINTR) continue;
+          why = std::string("read error (") + std::strerror(errno) + ")";
+          break;
+        }
+        if (n == 0) break;
+        bytes.append(buf, static_cast<size_t>(n));
+      }
+    }
+    ::close(fd);
+  }
+  if (why.empty()) {
+    if (auto db = parse(bytes)) return *db;
+    why = "corrupt";
+  }
   const std::string bad = path + ".bad." + std::to_string(static_cast<long long>(std::time(nullptr)));
   const bool moved = std::rename(path.c_str(), bad.c_str()) == 0;
-  if (note) *note = "face library " + path + " is corrupt; " + (moved ? "moved to " + bad : "could not move it") + "; starting empty";
+  if (note)
+    *note = "face library " + path + " " + why + "; " + (moved ? "moved to " + bad : "could not move it") +
+            "; starting empty";
   return FaceDb();
 }
