@@ -134,6 +134,9 @@ if(HOST)
   add_executable(scale_sweep tools/scale_sweep.cpp)
   target_link_libraries(scale_sweep PRIVATE m12core)
 endif()
+# experiment (phase 1b): Yolo-Fastest person detection vs RetinaFace on captured frames (host + device timing)
+m12_exe(person_file tools/person_file.cpp)
+target_link_libraries(person_file PRIVATE m12core)
 
 # ---- m12d main program ----
 execute_process(COMMAND git -c safe.directory=* rev-parse --short HEAD

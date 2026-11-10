@@ -1,0 +1,9 @@
+# Phase 4 objects (COCO classes NanoDet knows), held or placed ~0.5-1 m from the camera
+ob_cup|4|10|10|拿一个杯子，举在镜头前半米左右
+ob_bottle|4|10|8|换成一个瓶子
+ob_phone|4|10|8|换成手机
+ob_book|4|10|8|换成一本书
+ob_scissors|4|10|8|换成剪刀，没有就随便拿一样别的小东西
+ob_mouse|4|10|8|换成鼠标
+ob_bag|4|10|10|换成背包或者手提袋
+ob_desk|4|10|10|把东西都放到桌上，人离开画面

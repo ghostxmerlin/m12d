@@ -100,8 +100,8 @@ def load_script(path):
 def shape(v):
     if isinstance(v, dict):
         return {k: shape(x) for k, x in v.items()}
-    if isinstance(v, list):
-        return [shape(x) for x in v]
+    if isinstance(v, list):  # element types only: e.g. the model list grows with features
+        return ["list"] + sorted({json.dumps(shape(x), sort_keys=True) for x in v})
     if isinstance(v, bool):
         return "bool"
     if isinstance(v, (int, float)):

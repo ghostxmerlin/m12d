@@ -1,0 +1,9 @@
+# Phase 2 face recognition (seated at the desk): name|n_saved|every|wait_s|spoken prompt
+id_front|4|10|15|把M12转回来对着你，坐在桌前，正对镜头
+id_left|4|10|4|头向左转三十度
+id_right|4|10|4|头向右转三十度
+id_up|4|10|4|微微抬头
+id_down|4|10|4|微微低头
+id_smile|4|10|4|正对镜头，笑一下
+id_far|4|10|8|往后靠，离镜头一米左右
+id_dim|4|10|10|关掉附近的灯，正对镜头
