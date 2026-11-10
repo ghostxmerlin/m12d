@@ -63,6 +63,8 @@ set(M12CORE_SOURCES
   src/vision/face_tracker.cpp
   src/vision/person_det.cpp
   src/vision/person_tracker.cpp
+  src/vision/det_schedule.cpp
+  src/vision/pairing.cpp
   src/proto/det_json.cpp
   src/io/line_splitter.cpp
   src/io/serial_port.cpp
@@ -106,6 +108,8 @@ if(HOST)
     tests/test_face_tracker.cpp
     tests/test_person_det.cpp
     tests/test_person_tracker.cpp
+    tests/test_det_schedule.cpp
+    tests/test_pairing.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)

@@ -105,3 +105,31 @@ TEST_CASE("face extras follow their face through the prob sort") {
   CHECK(s.find("\"prob\":0.900,\"id\":2,\"gender\":\"?\",\"age\":8,\"age_group\":\"child\"") != std::string::npos);
   CHECK(s.find("\"prob\":0.500,\"id\":1}") != std::string::npos);
 }
+
+TEST_CASE("persons == nullptr keeps the line unchanged") {
+  std::vector<FaceBox> faces = {face(10, 20, 30, 40, 0.98765f)};
+  CHECK(det_json(7, faces, 2.0f, 10, true, nullptr, nullptr) == det_json(7, faces, 2.0f, 10));
+}
+
+TEST_CASE("person list appended after running") {
+  std::vector<PersonOut> ps = {PersonOut{3, PersonBox{100, 20, 30, 90.25f, 0.9456f}, 7}};
+  CHECK(det_json(8, {}, 2.0f, 10, true, nullptr, &ps) ==
+        "{\"f\":8,\"num\":0,\"face\":[],\"running\":\"Face Detector\",\"person\":[{\"x\":200.0,\"y\":40.0,"
+        "\"w\":60.0,\"h\":180.5,\"prob\":0.946,\"id\":3,\"face\":7}]}");
+  std::vector<PersonOut> none;
+  CHECK(det_json(9, {}, 2.0f, 10, true, nullptr, &none) ==
+        "{\"f\":9,\"num\":0,\"face\":[],\"running\":\"Face Detector\",\"person\":[]}");
+}
+
+TEST_CASE("at most 5 persons, highest prob first") {
+  std::vector<PersonOut> ps;
+  for (int i = 0; i < 7; i++) ps.push_back(PersonOut{i + 1, PersonBox{float(i), 0, 10, 10, 0.60f + 0.05f * ((i * 3) % 7)}, -1});
+  std::string s = det_json(1, {}, 1.0f, 10, true, nullptr, &ps);
+  int n = 0;
+  for (size_t k = s.find("\"id\":"); k != std::string::npos; k = s.find("\"id\":", k + 1)) n++;
+  CHECK(n == 5);
+  // probs 0.60 + 0.05*k, k = 0..6: the two lowest (0.600, 0.650) are dropped
+  CHECK(s.find("\"prob\":0.600") == std::string::npos);
+  CHECK(s.find("\"prob\":0.650") == std::string::npos);
+  CHECK(s.find("\"prob\":0.900") < s.find("\"prob\":0.850"));
+}

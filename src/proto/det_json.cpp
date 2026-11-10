@@ -6,7 +6,7 @@
 #include <numeric>
 
 std::string det_json(uint64_t frame_id, const std::vector<FaceBox>& faces, float scale, size_t max_faces,
-                     bool with_lm, const std::vector<FaceExtra>* extra) {
+                     bool with_lm, const std::vector<FaceExtra>* extra, const std::vector<PersonOut>* persons) {
   std::vector<size_t> order(faces.size());
   std::iota(order.begin(), order.end(), 0);
   std::stable_sort(order.begin(), order.end(), [&](size_t a, size_t b) { return faces[a].prob > faces[b].prob; });
@@ -47,7 +47,24 @@ std::string det_json(uint64_t frame_id, const std::vector<FaceBox>& faces, float
     }
     s += "}";
   }
-  s += "],\"running\":\"Face Detector\"}";
+  s += "],\"running\":\"Face Detector\"";
+  if (persons) {
+    std::vector<size_t> po(persons->size());
+    std::iota(po.begin(), po.end(), 0);
+    std::stable_sort(po.begin(), po.end(),
+                     [&](size_t a, size_t b) { return (*persons)[a].box.prob > (*persons)[b].box.prob; });
+    if (po.size() > kMaxPersons) po.resize(kMaxPersons);
+    s += ",\"person\":[";
+    for (size_t n = 0; n < po.size(); n++) {
+      const PersonOut& p = (*persons)[po[n]];
+      std::snprintf(buf, sizeof buf, "%s{\"x\":%.1f,\"y\":%.1f,\"w\":%.1f,\"h\":%.1f,\"prob\":%.3f,\"id\":%d,\"face\":%d}",
+                    n ? "," : "", p.box.x * scale, p.box.y * scale, p.box.w * scale, p.box.h * scale, p.box.prob, p.id,
+                    p.face_id);
+      s += buf;
+    }
+    s += "]";
+  }
+  s += "}";
   return s;
 }
 
