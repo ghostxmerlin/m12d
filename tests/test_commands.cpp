@@ -1,10 +1,20 @@
 #include <string>
 #include "doctest.h"
+#include <vector>
 #include "proto/commands.h"
 
 namespace {
+std::vector<FaceJob> g_jobs;
+bool g_queue_full = false, g_paused = false;
 StatusSource test_source(bool have_snap = true) {
   StatusSource src;
+  src.face_job = [](FaceJob j) {
+    if (g_queue_full) return false;
+    g_jobs.push_back(std::move(j));
+    return true;
+  };
+  src.paused = [] { return g_paused; };
+  src.faceid_enabled = true;
   src.hb_body = [] { return std::string("{\"t\":70}"); };
   src.snap = [have_snap] {
     return have_snap ? std::string("\"f\":5,\"path\":\"/tmp/m12d_snap.yuyv\",\"num\":0,\"face\":[]") : std::string();
@@ -15,12 +25,16 @@ StatusSource test_source(bool have_snap = true) {
   return src;
 }
 struct D {
+  D() {
+    g_jobs.clear();
+    g_queue_full = g_paused = false;
+  }
   RuntimeCfg cfg;
   Dispatcher d{cfg, test_source()};
   bool sub = true;
   std::string h(const std::string& line, bool too_long = false) { return d.handle(line, too_long, sub); }
 };
-const char* kDefaultCfg = "\"cfg\":{\"det\":true,\"lm\":true,\"attr\":true,\"person\":true,\"max_faces\":10,\"fps_cap\":0.0,\"sub\":true}";
+const char* kDefaultCfg = "\"cfg\":{\"det\":true,\"lm\":true,\"attr\":true,\"person\":true,\"id_th\":0.50,\"max_faces\":10,\"fps_cap\":0.0,\"sub\":true}";
 }  // namespace
 
 TEST_CASE("ping") {
@@ -47,7 +61,7 @@ TEST_CASE("cfg read") {
 TEST_CASE("cfg write") {
   D t;
   CHECK(t.h(R"({"id":5,"do":"cfg","max_faces":3,"lm":false,"fps_cap":4.5,"det":false})") ==
-        R"({"id":5,"ok":true,"cfg":{"det":false,"lm":false,"attr":true,"person":true,"max_faces":3,"fps_cap":4.5,"sub":true}})");
+        R"({"id":5,"ok":true,"cfg":{"det":false,"lm":false,"attr":true,"person":true,"id_th":0.50,"max_faces":3,"fps_cap":4.5,"sub":true}})");
   CHECK(t.cfg.max_faces == 3);
   CHECK(t.cfg.with_lm == false);
   CHECK(t.cfg.det_on == false);
@@ -57,7 +71,7 @@ TEST_CASE("cfg write") {
 TEST_CASE("cfg attr") {
   D t;
   CHECK(t.h(R"({"id":30,"do":"cfg","attr":false})") ==
-        R"({"id":30,"ok":true,"cfg":{"det":true,"lm":true,"attr":false,"person":true,"max_faces":10,"fps_cap":0.0,"sub":true}})");
+        R"({"id":30,"ok":true,"cfg":{"det":true,"lm":true,"attr":false,"person":true,"id_th":0.50,"max_faces":10,"fps_cap":0.0,"sub":true}})");
   CHECK(t.cfg.attr_on == false);
   CHECK(t.h(R"({"id":31,"do":"cfg","attr":1})") == R"({"id":31,"ok":false,"err":"badarg"})");
 }
@@ -65,7 +79,7 @@ TEST_CASE("cfg attr") {
 TEST_CASE("cfg sub") {
   D t;
   CHECK(t.h(R"({"id":6,"do":"cfg","sub":false})") ==
-        R"({"id":6,"ok":true,"cfg":{"det":true,"lm":true,"attr":true,"person":true,"max_faces":10,"fps_cap":0.0,"sub":false}})");
+        R"({"id":6,"ok":true,"cfg":{"det":true,"lm":true,"attr":true,"person":true,"id_th":0.50,"max_faces":10,"fps_cap":0.0,"sub":false}})");
   CHECK(t.sub == false);
 }
 
@@ -116,8 +130,65 @@ TEST_CASE("cfg person") {
   D t;
   CHECK(t.cfg.person_on == true);
   CHECK(t.h(R"({"id":31,"do":"cfg","person":false})") ==
-        R"({"id":31,"ok":true,"cfg":{"det":true,"lm":true,"attr":true,"person":false,"max_faces":10,"fps_cap":0.0,"sub":true}})");
+        R"({"id":31,"ok":true,"cfg":{"det":true,"lm":true,"attr":true,"person":false,"id_th":0.50,"max_faces":10,"fps_cap":0.0,"sub":true}})");
   CHECK(t.cfg.person_on == false);
   CHECK(t.h(R"({"id":32,"do":"cfg","person":1})") == R"({"id":32,"ok":false,"err":"badarg"})");
   CHECK(t.cfg.person_on == false);
+}
+
+TEST_CASE("cfg id_th") {
+  D t;
+  CHECK(t.h(R"({"id":40,"do":"cfg","id_th":0.62})").find("\"id_th\":0.62") != std::string::npos);
+  CHECK(t.cfg.id_th == doctest::Approx(0.62f));
+  CHECK(t.h(R"({"id":41,"do":"cfg","id_th":0.95})") == R"({"id":41,"ok":false,"err":"badarg"})");
+  CHECK(t.h(R"({"id":42,"do":"cfg","id_th":0.29})") == R"({"id":42,"ok":false,"err":"badarg"})");
+  CHECK(t.cfg.id_th == doctest::Approx(0.62f));
+}
+
+TEST_CASE("learn / who / forget / faces are queued with no immediate reply") {
+  D t;
+  CHECK(t.h(R"({"id":50,"do":"learn","name":"alice"})").empty());
+  CHECK(t.h(R"({"id":51,"do":"who","face":3})").empty());
+  CHECK(t.h(R"({"id":52,"do":"forget","name":"alice"})").empty());
+  CHECK(t.h(R"({"id":53,"do":"faces"})").empty());
+  REQUIRE(g_jobs.size() == 4);
+  CHECK(g_jobs[0].kind == FaceJob::kLearn);
+  CHECK(g_jobs[0].name == "alice");
+  CHECK(g_jobs[0].req_id == 50);
+  CHECK(g_jobs[1].kind == FaceJob::kWho);
+  CHECK(g_jobs[1].face_id == 3);
+  CHECK(g_jobs[2].kind == FaceJob::kForget);
+  CHECK(g_jobs[3].kind == FaceJob::kList);
+}
+
+TEST_CASE("face-id commands: standby, hot, busy, nomodel, badarg") {
+  D t;
+  t.cfg.det_on = false;
+  CHECK(t.h(R"({"id":60,"do":"who"})") == R"({"id":60,"ok":false,"err":"standby"})");
+  CHECK(t.h(R"({"id":61,"do":"learn","name":"a"})") == R"({"id":61,"ok":false,"err":"standby"})");
+  CHECK(t.h(R"({"id":62,"do":"faces"})").empty());  // no inference: still served in standby
+  t.cfg.det_on = true;
+  g_paused = true;
+  CHECK(t.h(R"({"id":63,"do":"who"})") == R"({"id":63,"ok":false,"err":"hot"})");
+  g_paused = false;
+  g_queue_full = true;
+  CHECK(t.h(R"({"id":64,"do":"who"})") == R"({"id":64,"ok":false,"err":"busy"})");
+  g_queue_full = false;
+  CHECK(t.h(R"({"id":65,"do":"learn","name":""})") == R"({"id":65,"ok":false,"err":"badarg"})");
+  CHECK(t.h(R"({"id":66,"do":"learn","name":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})") == R"({"id":66,"ok":false,"err":"badarg"})");
+  CHECK(t.h(R"({"id":67,"do":"learn"})") == R"({"id":67,"ok":false,"err":"badarg"})");
+  CHECK(t.h(R"({"id":68,"do":"who","face":0})") == R"({"id":68,"ok":false,"err":"badarg"})");
+  CHECK(t.h(R"({"id":69,"do":"who","face":"x"})") == R"({"id":69,"ok":false,"err":"badarg"})");
+  CHECK(t.h(R"({"id":70,"do":"who","extra":1})") == R"({"id":70,"ok":false,"err":"badarg"})");
+  CHECK(t.h(R"({"id":71,"do":"forget"})") == R"({"id":71,"ok":false,"err":"badarg"})");
+}
+
+TEST_CASE("face-id commands without the model reply nomodel") {
+  RuntimeCfg cfg;
+  StatusSource src = test_source();
+  src.faceid_enabled = false;
+  Dispatcher d{cfg, src};
+  bool sub = true;
+  CHECK(d.handle(R"({"id":80,"do":"who"})", false, sub) == R"({"id":80,"ok":false,"err":"nomodel"})");
+  CHECK(d.handle(R"({"id":81,"do":"faces"})", false, sub) == R"({"id":81,"ok":false,"err":"nomodel"})");
 }

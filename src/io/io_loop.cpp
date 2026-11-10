@@ -134,10 +134,28 @@ void IoLoop::accept_clients() {
   }
 }
 
+void IoLoop::reply(ChanId c, std::string line) {
+  {
+    std::lock_guard<std::mutex> lk(reply_mu_);
+    replies_.emplace_back(c, std::move(line));
+  }
+  const uint64_t one = 1;
+  ssize_t r = ::write(wake_fd_, &one, sizeof one);
+  (void)r;
+}
+
 void IoLoop::drain_push_queue() {
   uint64_t v;
   while (::read(wake_fd_, &v, sizeof v) > 0) {
   }
+  std::vector<std::pair<ChanId, std::string>> rs;
+  {
+    std::lock_guard<std::mutex> lk(reply_mu_);
+    rs.swap(replies_);
+  }
+  for (auto& [c, line] : rs)
+    if (Chan* ch = find(c))
+      if (!ch->dead) enqueue(*ch, line);
   std::string line;
   while (queue_.pop(line, 0))
     for (Chan& ch : chans_)

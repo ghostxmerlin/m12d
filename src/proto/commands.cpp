@@ -1,5 +1,6 @@
 #include "proto/commands.h"
 
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <initializer_list>
@@ -31,7 +32,7 @@ bool as_int(const FlatValue& v, long long lo, long long hi, long long& out) {
 
 Dispatcher::Dispatcher(RuntimeCfg& cfg, StatusSource src) : cfg_(cfg), src_(std::move(src)) {}
 
-std::string Dispatcher::handle(std::string_view line, bool too_long, bool& sub) {
+std::string Dispatcher::handle(std::string_view line, bool too_long, bool& sub, int chan) {
   if (too_long) return err(-1, "toolong");
   auto obj = parse_flat_json(line);
   if (!obj) return err(-1, "badjson");
@@ -60,11 +61,11 @@ std::string Dispatcher::handle(std::string_view line, bool too_long, bool& sub) 
   }
 
   if (*cmd == "cfg") {
-    if (!only_keys(o, {"id", "do", "det", "lm", "attr", "person", "max_faces", "fps_cap", "sub"})) return err(id, "badarg");
+    if (!only_keys(o, {"id", "do", "det", "lm", "attr", "person", "id_th", "max_faces", "fps_cap", "sub"})) return err(id, "badarg");
     // Validate everything first; apply only if all arguments are valid.
     bool det = cfg_.det_on, lm = cfg_.with_lm, attr = cfg_.attr_on, person = cfg_.person_on, nsub = sub;
     long long mf = cfg_.max_faces;
-    float fc = cfg_.fps_cap;
+    float fc = cfg_.fps_cap, th = cfg_.id_th;
     for (const auto& kv : o) {
       const std::string& k = kv.first;
       const FlatValue& v = kv.second;
@@ -74,6 +75,10 @@ std::string Dispatcher::handle(std::string_view line, bool too_long, bool& sub) 
         (k == "det" ? det : k == "lm" ? lm : k == "attr" ? attr : k == "person" ? person : nsub) = *b;
       } else if (k == "max_faces") {
         if (!as_int(v, 1, 10, mf)) return err(id, "badarg");
+      } else if (k == "id_th") {
+        const double* d = std::get_if<double>(&v);
+        if (!d || !std::isfinite(*d) || *d < 0.3 || *d > 0.9) return err(id, "badarg");
+        th = static_cast<float>(*d);
       } else if (k == "fps_cap") {
         const double* d = std::get_if<double>(&v);
         // 0 = no cap; otherwise 0.5..30 (tiny caps would park the detect thread for hours)
@@ -85,16 +90,49 @@ std::string Dispatcher::handle(std::string_view line, bool too_long, bool& sub) 
     cfg_.with_lm = lm;
     cfg_.attr_on = attr;
     cfg_.person_on = person;
+    cfg_.id_th = th;
     cfg_.max_faces = static_cast<int>(mf);
     cfg_.fps_cap = fc;
     sub = nsub;
     char buf[192];
     std::snprintf(buf, sizeof buf,
-                  ",\"cfg\":{\"det\":%s,\"lm\":%s,\"attr\":%s,\"person\":%s,\"max_faces\":%lld,\"fps_cap\":%.1f,"
-                  "\"sub\":%s}}",
-                  det ? "true" : "false", lm ? "true" : "false", attr ? "true" : "false", person ? "true" : "false", mf,
+                  ",\"cfg\":{\"det\":%s,\"lm\":%s,\"attr\":%s,\"person\":%s,\"id_th\":%.2f,\"max_faces\":%lld,"
+                  "\"fps_cap\":%.1f,\"sub\":%s}}",
+                  det ? "true" : "false", lm ? "true" : "false", attr ? "true" : "false", person ? "true" : "false", th, mf,
                   fc, nsub ? "true" : "false");
     return head + buf;
+  }
+
+  if (*cmd == "learn" || *cmd == "who" || *cmd == "forget" || *cmd == "faces") {
+    FaceJob j;
+    j.kind = *cmd == "learn" ? FaceJob::kLearn : *cmd == "who" ? FaceJob::kWho : *cmd == "forget" ? FaceJob::kForget
+                                                                                                    : FaceJob::kList;
+    const bool named = j.kind == FaceJob::kLearn || j.kind == FaceJob::kForget;
+    const bool faced = j.kind == FaceJob::kLearn || j.kind == FaceJob::kWho;
+    if (named ? !(faced ? only_keys(o, {"id", "do", "name", "face"}) : only_keys(o, {"id", "do", "name"}))
+              : !(faced ? only_keys(o, {"id", "do", "face"}) : only_keys(o, {"id", "do"})))
+      return err(id, "badarg");
+    if (named) {
+      auto n = o.find("name");
+      const std::string* s = n == o.end() ? nullptr : std::get_if<std::string>(&n->second);
+      if (!s || !FaceDb::valid_name(*s)) return err(id, "badarg");
+      j.name = *s;
+    }
+    if (faced) {
+      auto f = o.find("face");
+      long long fid = 0;
+      if (f != o.end() && !as_int(f->second, 1, 2147483647LL, fid)) return err(id, "badarg");
+      j.face_id = static_cast<int>(fid);
+    }
+    if (!src_.faceid_enabled) return err(id, "nomodel");
+    if (faced && !cfg_.det_on) return err(id, "standby");
+    if (faced && src_.paused && src_.paused()) return err(id, "hot");
+    j.req_id = id;
+    j.enq_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::steady_clock::now().time_since_epoch()).count();
+    j.chan = chan;
+    if (!src_.face_job || !src_.face_job(std::move(j))) return err(id, "busy");
+    return "";  // the detect thread replies later (IoLoop::reply)
   }
 
   return err(id, "unknown");

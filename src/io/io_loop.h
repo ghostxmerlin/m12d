@@ -2,6 +2,7 @@
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -34,6 +35,7 @@ class IoLoop {
 
   void run(std::atomic<bool>& stop);
   void push(std::string line);              // any thread
+  void reply(ChanId c, std::string line);   // any thread: deferred reply to one channel (dropped if gone)
   void set_subscribed(ChanId c, bool on);   // IO thread (inside handler) only
   bool subscribed(ChanId c) const;          // IO thread (inside handler) only
   const IoStats& stats() const { return stats_; }
@@ -64,6 +66,8 @@ class IoLoop {
   std::vector<Chan> chans_;
   ChanId next_id_ = 1;
   LineQueue queue_{kPushQueueLines};
+  std::mutex reply_mu_;
+  std::vector<std::pair<ChanId, std::string>> replies_;  // deferred replies from other threads
   uint64_t queue_drops_seen_ = 0;
   IoStats stats_;
 };

@@ -17,6 +17,7 @@ struct Rig {
   Pty pty;
   int port = 0;
   std::atomic<int> handled{0};
+  std::atomic<int> later_chan{-1};
   IoLoop* loop = nullptr;
   std::atomic<bool> stop{false};
   std::thread th;
@@ -29,6 +30,10 @@ struct Rig {
     loop = new IoLoop(sfd, lfd, max_clients, [this](ChanId c, std::string_view line, bool too_long) -> std::string {
       handled++;
       if (too_long) return "TOOLONG";
+      if (line == "later") {  // no reply now; the test replies via IoLoop::reply
+        later_chan = c;
+        return "";
+      }
       if (line == "unsub") {
         loop->set_subscribed(c, false);
         return "ok";
@@ -287,4 +292,32 @@ TEST_CASE("same replies over serial and tcp") {
     INFO("script line " << i + 1);
     CHECK(serial_replies[i] == expected[i]);
   }
+}
+
+TEST_CASE("reply from another thread reaches only that channel") {
+  Rig r;
+  int c = tcp_connect(r.port);
+  REQUIRE(c >= 0);
+  write_all(c, "later\n");
+  for (int i = 0; i < 100 && r.later_chan < 0; i++) std::this_thread::sleep_for(milliseconds(10));
+  REQUIRE(r.later_chan > 0);
+  CHECK(read_for(c, 100).empty());
+  std::thread([&] { r.loop->reply(r.later_chan, "D"); }).join();
+  CHECK(read_lines(c, 1, 1000) == "D\n");
+  CHECK(read_for(r.pty.master, 200).empty());
+  close(c);
+}
+
+TEST_CASE("reply to a closed channel is dropped") {
+  Rig r;
+  int c = tcp_connect(r.port);
+  REQUIRE(c >= 0);
+  write_all(c, "later\n");
+  for (int i = 0; i < 100 && r.later_chan < 0; i++) std::this_thread::sleep_for(milliseconds(10));
+  REQUIRE(r.later_chan > 0);
+  close(c);
+  std::this_thread::sleep_for(milliseconds(100));
+  r.loop->reply(r.later_chan, "D");
+  write_all(r.pty.master, "a\n");
+  CHECK(read_lines(r.pty.master, 1, 1000) == "R:a\n");
 }
