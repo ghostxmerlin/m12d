@@ -3,6 +3,7 @@
 | What | Where it is used | License | In this repo? |
 |---|---|---|---|
 | [M5Stack UnitV2Framework](https://github.com/m5stack/UnitV2Framework) @0e48be6, `main/face_detector.cpp` | `tools/ref/ref_stock_fd.cpp` 中有逐字复制的片段；`src/vision/retinaface.cpp` 是移植后修改的版本，改动写在文件头 | Apache-2.0 | 只有上述片段 |
+| M5Stack UnitV2Framework @0e48be6, `src/base.cpp`、`src/arcface.cpp`、`include/arcface.h` | `src/vision/stock_align.cpp`（resize、getAffineMatrix、warpAffineMatrix）和 `tools/ref/ref_stock_arc.cpp` 中有逐字复制的片段，来源行号写在文件头 | Apache-2.0 | 只有上述片段 |
 | [Tencent ncnn](https://github.com/Tencent/ncnn) @6afc736 | 推理引擎，静态链接 | BSD-3-Clause | 否，由 `scripts/fetch-deps.sh` 拉取 |
 | [doctest](https://github.com/doctest/doctest) 2.4.11 | 单元测试 | MIT | 否，由 `scripts/fetch-deps.sh` 拉取 |
 | RetinaFace mnet.25 模型（M5Stack 设备自带） | 人脸检测 | 随设备 | 否，部署时从设备的 payload 目录复制 |

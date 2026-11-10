@@ -66,6 +66,8 @@ set(M12CORE_SOURCES
   src/vision/det_schedule.cpp
   src/vision/pairing.cpp
   src/vision/person_stage.cpp
+  src/vision/face_embed.cpp
+  src/vision/stock_align.cpp
   src/proto/det_json.cpp
   src/io/line_splitter.cpp
   src/io/serial_port.cpp
@@ -112,6 +114,7 @@ if(HOST)
     tests/test_det_schedule.cpp
     tests/test_pairing.cpp
     tests/test_person_stage.cpp
+    tests/test_face_embed.cpp
   )
   add_executable(m12tests ${M12TEST_SOURCES})
   target_include_directories(m12tests PRIVATE ${CMAKE_SOURCE_DIR}/third_party/doctest)
@@ -136,6 +139,11 @@ if(HOST)
   add_executable(ref_stock_fd tools/ref/ref_stock_fd.cpp)
   target_include_directories(ref_stock_fd PRIVATE ${OPENCV_INC})
   target_link_libraries(ref_stock_fd PRIVATE ncnn_lib ${OPENCV_IMGPROC} ${OPENCV_CORE})
+  # phase 2 A-layer: stock arcface feature path (verbatim copy) and ours, on the same RGB input
+  add_executable(ref_stock_arc tools/ref/ref_stock_arc.cpp)
+  target_link_libraries(ref_stock_arc PRIVATE ncnn_lib)
+  add_executable(embed_file tools/embed_file.cpp)
+  target_link_libraries(embed_file PRIVATE m12core)
   # experiment: detection quality vs detector input size on the fixed frame set
   add_executable(attr_file tools/attr_file.cpp)
   target_link_libraries(attr_file PRIVATE m12core)
