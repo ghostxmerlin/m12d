@@ -1,0 +1,42 @@
+#!/bin/sh
+# m12d autostart (installed by scripts/boot.sh install). Runs only when the SD card holds the
+# enable flag; S85runpayload is patched to skip the stock payload in the same case.
+# Disable: remove /media/sdcard/m12-m12d (over USB SSH) and reboot -> stock behaviour.
+# Runs last (after S95ip-conf) so the USB-network address exists for the TCP debug port.
+FLAG=/media/sdcard/m12-m12d
+APP=/home/m5stack/m12d
+LOG=$APP/log/m12d.log
+
+m12d_pids() { ps | awk '$3 == "./bin/m12d" {print $1}'; }  # busybox ps: PID USER COMMAND
+
+case "$1" in
+  start)
+    [ -f "$FLAG" ] || exit 0
+    cd "$APP" || exit 0
+    mkdir -p log data
+    # keep one previous log; 1 MB cap
+    if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ]; then mv -f "$LOG" "$LOG.1"; fi
+    ARGS=""
+    # No USB-network address (e.g. inside StackChan): run serial-only instead of failing.
+    /sbin/ifconfig | grep -q "inet addr:10.254.239.1 " || ARGS="--tcp-port 0"
+    echo "=== boot (uptime $(cut -d' ' -f1 /proc/uptime) s) args:$ARGS" >> "$LOG"
+    printf "Starting m12d: "
+    # Started as ./bin/m12d so the stock thermal guard (95 C) can still kill it.
+    ./bin/m12d $ARGS >> "$LOG" 2>&1 < /dev/null &
+    echo "OK"
+    ;;
+  stop)
+    printf "Stopping m12d: "
+    for p in $(m12d_pids); do kill "$p"; done
+    echo "OK"
+    ;;
+  restart|reload)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+exit 0

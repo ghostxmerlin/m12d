@@ -47,6 +47,22 @@
   - `body_full/`：36 帧，重拍的全身（M12 垫高约 30 cm、镜头放平），每帧都能看到脚。1.5 米时头顶贴着画面上边；2.5、3.5 米和最远处（约 5 米）；侧身、横走 8 帧、空房间、椅子挂深色外套。阶段 1b 以这组为主。
 - 还没采：猫、各个房间（用户决定先不拍）。
 
+## 阶段 5（2026-11-10，分支 `phase-5`）
+
+- **用户决定**：
+  - 先不做分档温控、频率策略和独立看门狗。温度照旧在心跳里报告，用户先在 StackChan 上观察。
+  - 守护进程收回，不做。
+  - 开机自启：做。
+- **开机自启**：用 `scripts/boot.sh install|remove|status` 安装、卸载、查看状态。
+  - SD 卡上有 `/media/sdcard/m12-m12d` 时：
+    - `S85runpayload` 跳过原厂 payload（最多等 8 s 让 SD 卡挂载）；
+    - `/etc/init.d/S99m12d` 以 `./bin/m12d` 的形式启动程序，日志写到 `log/m12d.log`，超过 1 MB 时保留一份旧日志；
+    - 没有 USB 网络地址时，自动加 `--tcp-port 0`，只用串口。
+  - 原厂温控 `S110thermal` 不受影响。
+  - S85runpayload 的原件备份在 `/media/sdcard/m12test/S85runpayload.orig`。
+  - **回到原厂**：删除标记文件再重启，或者运行 `scripts/boot.sh remove`。
+- 没有守护进程：m12d 崩溃后不会自动重启，要等下一次上电。
+
 ## 阶段 2（2026-11-10）：按需人脸识别，已实现
 
 - 设计：`docs/superpowers/specs/2026-11-10-m12d-phase2-face-id-design.md`；计划：`docs/superpowers/plans/2026-11-10-m12d-phase2-face-id.md`；结果：`results/2026-11-10-phase2.md`。
@@ -96,7 +112,7 @@
 
 - 持久改动只有一处：`/etc/init.d/S90wifi-conf`，开机时如果 SD 卡上有 `m12-nowifi` 就跳过 Wi-Fi。备份在 `results/2026-11-09-baseline/S90wifi-conf.orig`。
 - 新增应用目录 `/home/m5stack/m12d/{bin,models,log}`，里面有 m12d、m12bench、m12cap、detect_file，以及几个实验用的二进制。
-- 当前原厂服务处于停止状态，是按 PID 停的；温控程序在运行。**重启设备就会回到原厂状态。**
+- **已安装开机自启**（2026-11-10）：上电后自动运行 m12d，原厂 payload 不再启动。回到原厂的方法见上面"阶段 5"一节。
 - `/tmp/set_*.yuyv` 是采集的固定图片集，重启后会丢失；本地 `tests/data/set/` 里有一份。
 
 ## Mac 端注意事项
