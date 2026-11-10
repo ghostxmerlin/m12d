@@ -1,0 +1,7 @@
+# Phase 2 face ID: someone other than the user, seated at the desk ~0.5 m from the camera.
+# Run per person: scripts/capsession.sh others_<code> scripts/shots/others.txt   (code: a, b, c ...)
+o_front|4|10|10|请坐到镜头前，正对镜头，听到开始后别动，直到听到好
+o_left|4|10|4|头向左转三十度
+o_right|4|10|4|头向右转三十度
+o_smile|4|10|4|正对镜头，笑一下
+o_far|4|10|8|往后靠，离镜头一米左右

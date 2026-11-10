@@ -144,6 +144,8 @@ if(HOST)
   target_include_directories(ref_stock_fd PRIVATE ${OPENCV_INC})
   target_link_libraries(ref_stock_fd PRIVATE ncnn_lib ${OPENCV_IMGPROC} ${OPENCV_CORE})
   # phase 2 A-layer: stock arcface feature path (verbatim copy) and ours, on the same RGB input
+  add_executable(faceid_eval tools/faceid_eval.cpp)
+  target_link_libraries(faceid_eval PRIVATE m12core)
   add_executable(ref_stock_arc tools/ref/ref_stock_arc.cpp)
   target_link_libraries(ref_stock_arc PRIVATE ncnn_lib)
 
