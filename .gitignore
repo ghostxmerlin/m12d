@@ -4,3 +4,4 @@ tests/data/
 .superpowers/
 Testing/
 __pycache__/
+data/
