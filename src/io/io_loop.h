@@ -23,7 +23,8 @@ class IoLoop {
  public:
   // Runs on the IO thread. Returns the reply line (without '\n'); empty = no reply.
   using Handler = std::function<std::string(ChanId, std::string_view line, bool too_long)>;
-  static constexpr size_t kChanBufBytes = 8192;
+  static constexpr size_t kChanBufBytes = 8192;   // cap for push lines
+  static constexpr size_t kReplyHeadroom = 4096;  // extra room only replies may use
   static constexpr size_t kPushQueueLines = 64;
   static constexpr int kClientSndBuf = 16384;
   static constexpr size_t kReadBudget = 4096;  // max input bytes per channel per poll round
@@ -52,7 +53,7 @@ class IoLoop {
   };
   Chan* find(ChanId c);
   const Chan* find(ChanId c) const;
-  void enqueue(Chan& ch, const std::string& line);
+  void enqueue(Chan& ch, const std::string& line, bool is_reply = false);
   void flush(Chan& ch);
   void read_input(Chan& ch);
   void accept_clients();

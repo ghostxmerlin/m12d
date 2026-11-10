@@ -321,3 +321,39 @@ TEST_CASE("reply to a closed channel is dropped") {
   write_all(r.pty.master, "a\n");
   CHECK(read_lines(r.pty.master, 1, 1000) == "R:a\n");
 }
+
+TEST_CASE("a deferred reply is not dropped when pushes filled the channel buffer") {
+  Rig r;
+  int c = tcp_connect(r.port, 4096);  // slow reader: tiny receive buffer, reads only at the end
+  REQUIRE(c >= 0);
+  write_all(c, "later\n");
+  for (int i = 0; i < 100 && r.later_chan < 0; i++) std::this_thread::sleep_for(milliseconds(10));
+  REQUIRE(r.later_chan > 0);
+  // Sustained det-line flood (like 15 fps of big lines on a slow serial link): the socket buffers
+  // fill, then the channel buffer stays full.
+  std::atomic<bool> flood{true};
+  std::thread pusher([&] {
+    const std::string payload(199, 'x');
+    while (flood) {
+      r.loop->push(payload);
+      std::this_thread::sleep_for(milliseconds(1));
+    }
+  });
+  // Loopback socket buffers absorb ~80-100 KB first; flood until the channel buffer itself drops.
+  uint64_t d0 = 0;
+  for (int i = 0; i < 60; i++) {
+    std::this_thread::sleep_for(milliseconds(100));
+    if (i == 25) d0 = r.loop->stats().dropped;
+  }
+  REQUIRE(r.loop->stats().dropped > d0 + 100);  // still dropping right before the reply
+  // As long as a push line, so it cannot squeeze into the < 200-byte gap the pushes leave.
+  r.loop->reply(r.later_chan, "DEFERRED" + std::string(191, 'y'));
+  std::this_thread::sleep_for(milliseconds(200));
+  flood = false;
+  pusher.join();
+  std::string rx;
+  const std::string want = "\nDEFERRED" + std::string(191, 'y') + "\n";
+  for (int i = 0; i < 50 && rx.find(want) == std::string::npos; i++) rx += read_for(c, 100);
+  CHECK(rx.find(want) != std::string::npos);
+  close(c);
+}

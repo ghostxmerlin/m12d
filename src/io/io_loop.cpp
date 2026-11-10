@@ -60,10 +60,11 @@ void IoLoop::push(std::string line) {
   (void)r;
 }
 
-void IoLoop::enqueue(Chan& ch, const std::string& line) {
+void IoLoop::enqueue(Chan& ch, const std::string& line, bool is_reply) {
   if (ch.dead) return;
-  // Whole lines only: if the line (plus '\n') does not fit, drop it.
-  if (ch.out.size() + line.size() + 1 > kChanBufBytes) {
+  // Whole lines only: if the line (plus '\n') does not fit, drop it. Replies get kReplyHeadroom
+  // beyond the push cap, so a channel flooded with det lines still gets its replies.
+  if (ch.out.size() + line.size() + 1 > kChanBufBytes + (is_reply ? kReplyHeadroom : 0)) {
     stats_.dropped++;
     return;
   }
@@ -104,7 +105,7 @@ void IoLoop::read_input(Chan& ch) {
     if (n > 0) {
       ch.splitter.feed(buf, static_cast<size_t>(n), [&](std::string_view line, bool too_long) {
         std::string reply = handler_(ch.id, line, too_long);
-        if (!reply.empty()) enqueue(ch, reply);
+        if (!reply.empty()) enqueue(ch, reply, true);
       });
       if (ch.dead) return;
       continue;
@@ -155,7 +156,7 @@ void IoLoop::drain_push_queue() {
   }
   for (auto& [c, line] : rs)
     if (Chan* ch = find(c))
-      if (!ch->dead) enqueue(*ch, line);
+      if (!ch->dead) enqueue(*ch, line, true);
   std::string line;
   while (queue_.pop(line, 0))
     for (Chan& ch : chans_)
