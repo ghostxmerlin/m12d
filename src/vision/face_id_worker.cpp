@@ -151,7 +151,15 @@ std::vector<JobReply> FaceIdWorker::step(const std::vector<FaceBox>& faces, cons
   if (k < 0) return out;  // target not in view this frame: wait (deadline decides)
   if (!learn->samples.empty() && now_ms - learn->last_sample_ms < kSampleGapMs) return out;
   learn->track = ids[k];
-  learn->samples.push_back(embed(faces[k]));
+  const Embedding e = embed(faces[k]);
+  // The tracker can hand this id to someone else who steps into the same spot: a sample that
+  // does not match the first one means the sampled person changed. Store nothing.
+  if (!learn->samples.empty() && cosine(e, learn->samples.front()) < th) {
+    out.push_back(JobReply{learn->job.chan, fail(learn->job.req_id, "noface")});
+    pending_.erase(learn);
+    return out;
+  }
+  learn->samples.push_back(e);
   learn->last_sample_ms = now_ms;
   if (static_cast<int>(learn->samples.size()) < kLearnSamples) return out;
 

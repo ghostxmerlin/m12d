@@ -253,3 +253,18 @@ TEST_CASE("write-back: overlapping faces drop it, null clears, another name repl
   t.step({}, {}, 1201);
   CHECK(t.w.name_for(11).empty());
 }
+
+TEST_CASE("learn refuses to mix two people on one track id") {
+  // The IoU tracker can hand an id to someone else who steps into the same spot within its
+  // forget window; samples that do not match the first one must not be stored together.
+  W t;
+  t.w.enqueue({job(FaceJob::kLearn, 5, "alice")});
+  t.step({fb(10)}, {11}, 0);  // sample 1 looks like axis 0
+  t.step({fb(10)}, {11}, 150);
+  std::vector<JobReply> r;
+  for (int64_t ms = 300; ms <= 3000 && r.empty(); ms += 150) r = t.step({fb(300)}, {11}, ms);  // same id, axis 50
+  REQUIRE(r.size() == 1);
+  CHECK(r[0].line == R"({"id":5,"ok":false,"err":"noface"})");
+  CHECK(t.db.list().empty());
+  CHECK(t.persists == 0);
+}
