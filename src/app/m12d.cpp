@@ -225,9 +225,10 @@ int main(int argc, char** argv) {
       const std::vector<int> ids = tracker.update(faces, t_ms);
       // Gender / age group: at most one face per frame gets a 12 ms sample, on the
       // tracker's schedule (3 samples for a new face, then a refresh every 5 s).
+      // Face ids are printed whenever persons are (person[].face refers to them), even with --no-attr.
       std::vector<FaceExtra> extra;
-      if (opt.use_attr) {
-        if (cfg.attr_on) {
+      if (opt.use_attr || person_on) {
+        if (opt.use_attr && cfg.attr_on) {
           const int k = tracker.pick_for_attr(ids, t_ms);
           if (k >= 0) {
             genderage_crop(rgb.data(), 320, 240, faces[k], ga_crop.data());
@@ -238,8 +239,8 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < faces.size(); i++) extra[i] = FaceExtra{ids[i], tracker.attr(ids[i])};
       }
       std::vector<PersonOut> persons;
-      if (person_on) persons = pstage.step(rgb.data(), plan.person, faces, ids, t_ms);
-      emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm, opt.use_attr ? &extra : nullptr,
+      if (person_on) persons = pstage.step(rgb.data(), plan.person, faces, ids, t_ms, static_cast<size_t>(cfg.max_faces));
+      emit(det_json(f.id, faces, kScale, cfg.max_faces, cfg.with_lm, (opt.use_attr || person_on) ? &extra : nullptr,
                     person_on ? &persons : nullptr));
       if (sh.det_frames++ == 0) first_det_ms = now_ms();
       meter.tick(now_ms());

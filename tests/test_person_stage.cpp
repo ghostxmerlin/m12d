@@ -66,3 +66,20 @@ TEST_CASE("reset starts over with a new track") {
   REQUIRE(b.size() == 1);
   CHECK(b[0].id != a[0].id);
 }
+
+TEST_CASE("pairing only uses faces that are output (max_faces)") {
+  std::vector<uint8_t> rgb;
+  if (!frame("stand25_00", rgb)) return;
+  PersonDetector det;
+  REQUIRE(det.load(kYoloS, 1));
+  // faces are prob-sorted (RetinaFace order): A outside the person, B on the person's head.
+  const std::vector<FaceBox> faces = {FaceBox{10, 10, 12, 14, 0.95f, {}}, FaceBox{158, 38, 12, 14, 0.9f, {}}};
+  PersonStage one(det);
+  auto a = one.step(rgb.data(), true, faces, {5, 6}, 0, 1);
+  REQUIRE(a.size() == 1);
+  CHECK(a[0].face_id == -1);  // B is not in the line when max_faces = 1
+  PersonStage two(det);
+  auto b = two.step(rgb.data(), true, faces, {5, 6}, 0, 2);
+  REQUIRE(b.size() == 1);
+  CHECK(b[0].face_id == 6);
+}
